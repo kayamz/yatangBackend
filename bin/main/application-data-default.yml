@@ -1,0 +1,56 @@
+default:
+  create: ${DEFAULT_USER_CREATE:true}
+  users:
+    -
+      username: super
+      password: 1qaz@WSX3edc$RFV
+      email: kangminju333@gmail.com
+    -
+      username: kaya
+      password: kaya1234
+      email: kmj5137@naver.com
+
+  fridge:
+    -
+      name: superfridge
+      user-id: 1
+      description: description1
+    -
+      name: kayacooler
+      user-id: 2
+      description: description2
+
+  fridge-items:
+    -
+      fridge-id: 1
+      item-name: apple
+      quantity: 10
+      unit: 개
+    -
+      fridge-id: 1
+      item-name: banana
+      quantity: 20
+      unit: 개
+    -
+      fridge-id: 2
+      item-name: orange
+      quantity: 30
+      unit: 개
+    -
+      fridge-id: 2
+      item-name: milk
+      quantity: 2
+      unit: L
+      expiration-date: 2025-10-31
+
+  freezer-items:
+    -
+      fridge-id: 1
+      item-name: ice_cream
+      quantity: 5
+      unit: 개
+    -
+      fridge-id: 2
+      item-name: frozen_peas
+      quantity: 15
+      unit: g

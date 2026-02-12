@@ -2,6 +2,7 @@ package com.kaya.yatang.controller;
 
 import com.kaya.yatang.dto.UserDTO;
 import com.kaya.yatang.dto.request.NicknameUpdateRequest;
+import com.kaya.yatang.dto.request.PasswordUpdateRequest;
 import com.kaya.yatang.dto.request.SignupRequest;
 import com.kaya.yatang.dto.response.SignupResponse;
 import com.kaya.yatang.service.UserService;
@@ -33,8 +34,8 @@ public class UserController {
      */
     @PatchMapping("/{userId}/nickname")
     public ResponseEntity<UserDTO> updateNickname(
-        @PathVariable Long userId,
-        @RequestBody NicknameUpdateRequest request) {
+            @PathVariable Long userId,
+            @RequestBody NicknameUpdateRequest request) {
 
         UserDTO updatedUser = userService.updateNickname(userId, request);
         return ResponseEntity.ok(updatedUser);
@@ -86,5 +87,17 @@ public class UserController {
         response.put("available", isAvailable);
 
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 비밀번호 변경
+     */
+    @PatchMapping("/{userId}/password")
+    public ResponseEntity<Void> updatePassword(
+            @PathVariable Long userId,
+            @RequestBody PasswordUpdateRequest request) {
+
+        userService.updatePassword(userId, request.getCurrentPassword(), request.getNewPassword());
+        return ResponseEntity.ok().build();
     }
 }

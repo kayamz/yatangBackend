@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>register</title>
+    <!-- jquery cdn -->
+    <script
+            src="https://code.jquery.com/jquery-3.7.0.min.js"
+            integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g="
+            crossorigin="anonymous"></script>
+</head>
+<body>
+<!-- action속성 : form에 작성한 데이터를 어디로 보낼지 지정 -->
+<form action="/account/register" method="post">
+    <!-- name속성 : 서버로 전송할 때 변수이름의 역할 -->
+    <!-- onkeyup 대신 onblur 사용할 경우 : 해당 input 칸에서 벗어나면 함수가 실행됨. -->
+    이름 : <input type="text" name="username" id="username"><br>
+    아이디 : <input type="text" name="userid" id="userid" onkeyup="useridCheck()"><p id = "check-result"></p>
+    비밀번호 : <input type="password" name="userpw" id="userpw"><br>
+    <input type="submit" value="회원가입">
+</form>
+</body>
+<script th:inline="javascript">
+    const useridCheck = () => {
+        const newid = document.getElementById("userid").value;
+        const checkResult = document.getElementById("check-result");
+        console.log("입력값 : ", newid);
+        $.ajax({
+            // 요청방식 : post, url : "userid-check", 데이터 : 아이디
+            type : "post",
+            url : "/account/userid-check",
+            data : {
+                "userid" : newid
+            },
+            success : function(res) {
+                console.log("요청성공", res);
+                if (res=="ok") {
+                    console.log("사용 가능한 이메일");
+                    checkResult.style.color = "green";
+                    checkResult.innerHTML = "사용 가능한 아이디";
+                } else {
+                    console.log("이미 사용중인 아이디");
+                    checkResult.style.color = "red";
+                    checkResult.innerHTML = "이미 사용중인 아이디";
+                }
+            },
+            error : function(err) {
+                console.log("에러발생", err);
+            }
+        });
+    }
+</script>
+</html>

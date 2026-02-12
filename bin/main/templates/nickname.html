@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>nickname</title>
+</head>
+<body>
+<!-- action속성 : form에 작성한 데이터를 어디로 보낼지 지정 -->
+<form action="/account/nickname" method="post">
+    <!-- name속성 : 서버로 전송할 때 변수이름의 역할 -->
+    <!-- onkeyup 대신 onblur 사용할 경우 : 해당 input 칸에서 벗어나면 함수가 실행됨. -->
+    <!-- 닉네임 : <input type="text" name="nickname" id="nickname"><br> -->
+    <input type="hidden" th:value="${setNickname.id}" name="id">
+    <input type="hidden" th:value="${setNickname.username}" name="username">
+    <input type="hidden" th:value="${setNickname.userid}" name="userid">
+    <input type="hidden" th:value="${setNickname.userpw}" name="userpw">
+    닉네임 : <input type="text" th:value="${setNickname.nickname}" name="nickname"> <br>
+    <input type="submit" value="닉네임 저장">
+</form>
+</body>
+</html>

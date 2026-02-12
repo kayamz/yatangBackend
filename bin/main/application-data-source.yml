@@ -1,0 +1,22 @@
+# database 연동 설정
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    port: ${DATASOURCE_PORT:5432}
+    url: jdbc:postgresql://${spring.datasource.hostname}:${spring.datasource.port}/${spring.datasource.database}
+    hostname: ${DATASOURCE_HOSTNAME:localhost}
+    database: ${DATASOURCE_DATABASE:yatangdb}
+    username: ${DATASOURCE_USERNAME:kaya}
+    password: ${DATASOURCE_PASSWORD:123}
+  jpa:
+    show-sql: true
+    generate-ddl: true
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+    hibernate:
+      ddl-auto: ${DDL_AUTO:none}
+    database: postgresql
+    database-platform: ${JPA_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
+    open-in-view: false

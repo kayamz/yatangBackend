@@ -62,14 +62,13 @@ public class UserService {
         Fridge mainFridge = createMainFridge(savedUser);
 
         return new SignupResponse(
-            savedUser.getId(),
-            savedUser.getEmail(),
-            savedUser.getUsername(),
-            savedUser.getNickname(),
-            mainFridge.getId(),
-            "회원가입이 완료되었습니다.",
-            savedUser.getCreatedAt()
-        );
+                savedUser.getId(),
+                savedUser.getEmail(),
+                savedUser.getUsername(),
+                savedUser.getNickname(),
+                mainFridge.getId(),
+                "회원가입이 완료되었습니다.",
+                savedUser.getCreatedAt());
     }
 
     /**
@@ -77,7 +76,7 @@ public class UserService {
      */
     public UserDTO updateNickname(Long userId, NicknameUpdateRequest request) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         // 닉네임 중복 확인 (데이터 무결성)
         if (userRepository.existsByNicknameAndIdNot(request.getNickname(), userId)) {
@@ -96,7 +95,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserDTO getUserProfile(Long userId) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         return new UserDTO(user);
     }
@@ -145,5 +144,20 @@ public class UserService {
         mainFridge.setUser(user);
 
         return fridgeRepository.save(mainFridge);
+    }
+
+    /**
+     * 비밀번호 변경
+     */
+    public void updatePassword(Long userId, String currentPassword, String newPassword) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
     }
 }

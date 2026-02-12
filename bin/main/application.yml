@@ -1,0 +1,37 @@
+server:
+  port: 8080
+  forward-headers-strategy: framework
+
+logging:
+  level:
+    # JPA View Parameter
+    org.hibernate.type.descriptor.sql: trace
+
+spring:
+  config:
+    import:
+      - classpath:application-data-source.yml
+      - classpath:application-data-default.yml
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    groups-order: DESC
+    operationsSorter: method
+    disable-swagger-default-url: true
+    display-request-duration: true
+  show-actuator: true
+
+  # spring data jpa 설정
+#  jpa:
+#    database-platform: org.hibernate.dialect.MySQL5InnoDBDialect   # version 다름
+#    database-platform: org.hibernate.dialect.MySQL8Dialect         # 수정
+#    properties:
+#      hibernate:
+#        dialect: org.hibernate.dialect.MySQL5Dialect
+#    open-in-view: false
+#    show-sql: true
+#    hibernate:
+#      ddl-auto: update
