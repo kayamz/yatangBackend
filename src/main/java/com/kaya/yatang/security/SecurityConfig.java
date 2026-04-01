@@ -42,8 +42,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-//        configuration.addAllowedOrigin("http://172.30.1.26:3000");
-        configuration.addAllowedOrigin("*");
+        configuration.addAllowedOriginPattern("*");  // addAllowedOrigin("*") 대신 Pattern 사용
         configuration.addAllowedHeader("*");
         configuration.addAllowedMethod("*");
         configuration.setAllowCredentials(true);
@@ -73,19 +72,43 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .httpBasic().disable() // rest api 만을 고려하여 기본설정 해제
-                .csrf().disable()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) // 토큰 기반 인증이므로 세션 사용 안함
-                .and()
-                .authorizeRequests() // 요청에 대한 사용 권한 체크
-                .requestMatchers(new AntPathRequestMatcher("/api/**")
-                , new AntPathRequestMatcher("/admin/**")
-                , new AntPathRequestMatcher("/api/post/**")).permitAll()
-                .and()
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .httpBasic(httpBasic -> httpBasic.disable())
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                new AntPathRequestMatcher("/swagger-ui/**"),
+                                new AntPathRequestMatcher("/swagger-ui.html"),
+                                new AntPathRequestMatcher("/api-docs/**"),
+                                new AntPathRequestMatcher("/api/login"),
+                                new AntPathRequestMatcher("/api/register")
+                        ).permitAll()
+//                                .anyRequest().permitAll()
+                        .anyRequest().authenticated()
+                )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
-        // JwtAuthenticationFilter를 UsernamePasswordAuthenticationFilter 전에 넣음
         return http.build();
     }
+
+//    @Bean               // before adjust JWT authorization at swagger ui
+//    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+//        http
+//                .httpBasic().disable() // rest api 만을 고려하여 기본설정 해제
+//                .csrf().disable()
+//                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) // 토큰 기반 인증이므로 세션 사용 안함
+//                .and()
+//                .authorizeRequests() // 요청에 대한 사용 권한 체크
+//                .requestMatchers(new AntPathRequestMatcher("/api/**")
+//                , new AntPathRequestMatcher("/admin/**")
+//                , new AntPathRequestMatcher("/api/post/**")).permitAll()
+//                .and()
+//                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
+//        // JwtAuthenticationFilter를 UsernamePasswordAuthenticationFilter 전에 넣음
+//        return http.build();
+//    }
 
 //    @Bean
 //    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {

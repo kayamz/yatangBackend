@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
  * 프론트엔드에서는 해당 엔드포인트가 존재하는지만 확인하고
  * 실제 카카오/구글 인증 연동은 추후 진행한다.
  */
+
+// Todo : 간편 로그인 연동 성공시키기, DB에 잘 기록되는지 test
 @RestController
 @RequestMapping("/api/oauth2")
 public class OAuthController {
