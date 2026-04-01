@@ -142,6 +142,7 @@ public class UserService {
         mainFridge.setName("메인 냉장고");
         mainFridge.setDescription("회원가입시 자동으로 생성된 냉장고입니다.");
         mainFridge.setUser(user);
+        mainFridge.setIsMain(true);
 
         return fridgeRepository.save(mainFridge);
     }

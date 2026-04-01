@@ -16,6 +16,8 @@ public class FridgeDTO {
     private String description;
     private LocalDate createDate;
     private LocalDateTime updatedAt;
+    private Boolean isMain;
+    private Boolean deleted;
 
     // 소유자 정보
     private Long userId;

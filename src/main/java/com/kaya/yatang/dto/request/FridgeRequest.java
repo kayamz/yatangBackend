@@ -12,4 +12,5 @@ import lombok.Setter;
 public class FridgeRequest {
     private String name;
     private String description;
+    private Boolean isMain;
 }

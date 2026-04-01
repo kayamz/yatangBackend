@@ -33,8 +33,8 @@ public class FridgeController {
      */
     @PostMapping
     public ResponseEntity<FridgeDTO> createFridge(
-        @RequestParam Long userId,
-        @RequestBody FridgeRequest request) {
+            @RequestParam Long userId,
+            @RequestBody FridgeRequest request) {
 
         FridgeDTO fridge = fridgeService.createFridge(userId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(fridge);
@@ -63,8 +63,8 @@ public class FridgeController {
      */
     @GetMapping("/{fridgeId}")
     public ResponseEntity<FridgeDTO> getFridgeById(
-        @PathVariable Long fridgeId,
-        @RequestParam Long userId) {
+            @PathVariable Long fridgeId,
+            @RequestParam Long userId) {
 
         FridgeDTO fridge = fridgeService.getFridgeById(fridgeId, userId);
         return ResponseEntity.ok(fridge);
@@ -75,9 +75,9 @@ public class FridgeController {
      */
     @PatchMapping("/{fridgeId}")
     public ResponseEntity<FridgeDTO> updateFridge(
-        @PathVariable Long fridgeId,
-        @RequestParam Long userId,
-        @RequestBody FridgeRequest request) {
+            @PathVariable Long fridgeId,
+            @RequestParam Long userId,
+            @RequestBody FridgeRequest request) {
 
         FridgeDTO updatedFridge = fridgeService.updateFridge(fridgeId, userId, request);
         return ResponseEntity.ok(updatedFridge);
@@ -88,8 +88,8 @@ public class FridgeController {
      */
     @DeleteMapping("/{fridgeId}")
     public ResponseEntity<Map<String, String>> deleteFridge(
-        @PathVariable Long fridgeId,
-        @RequestParam Long userId) {
+            @PathVariable Long fridgeId,
+            @RequestParam Long userId) {
 
         fridgeService.deleteFridge(fridgeId, userId);
 
@@ -104,8 +104,8 @@ public class FridgeController {
      */
     @GetMapping("/{fridgeId}/stats")
     public ResponseEntity<FridgeStatsDTO> getFridgeStats(
-        @PathVariable Long fridgeId,
-        @RequestParam Long userId) {
+            @PathVariable Long fridgeId,
+            @RequestParam Long userId) {
 
         FridgeStatsDTO stats = fridgeService.getFridgeStats(fridgeId, userId);
         return ResponseEntity.ok(stats);
@@ -116,9 +116,9 @@ public class FridgeController {
      */
     @GetMapping("/{fridgeId}/expiring-soon")
     public ResponseEntity<List<ItemSummaryDTO>> getExpiringSoonItems(
-        @PathVariable Long fridgeId,
-        @RequestParam Long userId,
-        @RequestParam(defaultValue = "3") int days) {
+            @PathVariable Long fridgeId,
+            @RequestParam Long userId,
+            @RequestParam(defaultValue = "3") int days) {
 
         List<ItemSummaryDTO> items = fridgeService.getExpiringSoonItems(fridgeId, userId, days);
         return ResponseEntity.ok(items);

@@ -32,6 +32,12 @@ public class Fridge {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "isMain")
+    private Boolean isMain;
+
+    @Column(name = "deleted")
+    private Boolean deleted;
+
     // 🔹 User(소유자) 관계 (ManyToOne)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -72,10 +78,11 @@ public class Fridge {
     }
 
     // 🔹 정적 팩토리 메서드 - 일반 냉장고 생성
-    public static Fridge createFridge(User user, String name, String description) {
+    public static Fridge createFridge(User user, Boolean isMain, String name, String description) {
         return Fridge.builder()
             .name(name)
             .description(description)
+            .isMain(isMain)
             .user(user)
             .fridgeItems(new ArrayList<>())
             .freezerItems(new ArrayList<>())
@@ -84,6 +91,6 @@ public class Fridge {
 
     // 🔹 정적 팩토리 메서드 - 메인 냉장고 생성
     public static Fridge createMainFridge(User user) {
-        return createFridge(user, "메인 냉장고", "회원가입시 자동으로 생성된 냉장고입니다.");
+        return createFridge(user, true, "메인 냉장고", "회원가입시 자동으로 생성된 냉장고입니다.");
     }
 }

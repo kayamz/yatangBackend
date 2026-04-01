@@ -32,9 +32,20 @@ public class FridgeService {
      */
     public FridgeDTO createFridge(Long userId, FridgeRequest request) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
-        Fridge fridge = Fridge.createFridge(user, request.getName(), request.getDescription());
+        // if (request.getIsMain() == true) {
+        //
+        // }
+        if (Boolean.TRUE.equals(request.getIsMain())) {
+            user.getFridges().forEach(f -> {
+                if (Boolean.TRUE.equals(f.getIsMain())) {
+                    f.setIsMain(false);
+                }
+            });
+        }
+        Fridge fridge = Fridge.createFridge(user, request.getIsMain() != null ? request.getIsMain() : false,
+                request.getName(), request.getDescription());
         Fridge savedFridge = fridgeRepository.save(fridge);
 
         return new FridgeDTO(savedFridge);
@@ -46,11 +57,11 @@ public class FridgeService {
     @Transactional(readOnly = true)
     public List<FridgeDTO> getUserFridges(Long userId) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         return user.getFridges().stream()
-            .map(FridgeDTO::new)
-            .collect(Collectors.toList());
+                .map(FridgeDTO::new)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -59,7 +70,7 @@ public class FridgeService {
     @Transactional(readOnly = true)
     public FridgeDTO getFridgeById(Long fridgeId, Long userId) {
         Fridge fridge = fridgeRepository.findById(fridgeId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 냉장고입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 냉장고입니다."));
 
         // 소유자 확인
         if (!fridge.getUser().getId().equals(userId)) {
@@ -75,13 +86,13 @@ public class FridgeService {
     @Transactional(readOnly = true)
     public FridgeDTO getMainFridge(Long userId) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         // "메인 냉장고" 찾기
         Fridge mainFridge = user.getFridges().stream()
-            .filter(fridge -> "메인 냉장고".equals(fridge.getName()))
-            .findFirst()
-            .orElseGet(() -> user.getFridges().isEmpty() ? null : user.getFridges().get(0));
+                .filter(fridge -> Boolean.TRUE.equals(fridge.getIsMain()))
+                .findFirst()
+                .orElseGet(() -> user.getFridges().isEmpty() ? null : user.getFridges().get(0));
 
         if (mainFridge == null) {
             throw new IllegalArgumentException("냉장고가 존재하지 않습니다.");
@@ -95,7 +106,7 @@ public class FridgeService {
      */
     public FridgeDTO updateFridge(Long fridgeId, Long userId, FridgeRequest request) {
         Fridge fridge = fridgeRepository.findById(fridgeId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 냉장고입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 냉장고입니다."));
 
         // 소유자 확인
         if (!fridge.getUser().getId().equals(userId)) {
@@ -109,6 +120,16 @@ public class FridgeService {
         if (request.getDescription() != null) {
             fridge.setDescription(request.getDescription());
         }
+        if (request.getIsMain() != null) {
+            if (Boolean.TRUE.equals(request.getIsMain()) && !Boolean.TRUE.equals(fridge.getIsMain())) {
+                fridge.getUser().getFridges().forEach(f -> {
+                    if (Boolean.TRUE.equals(f.getIsMain())) {
+                        f.setIsMain(false);
+                    }
+                });
+            }
+            fridge.setIsMain(request.getIsMain());
+        }
 
         Fridge updatedFridge = fridgeRepository.save(fridge);
         return new FridgeDTO(updatedFridge);
@@ -119,7 +140,7 @@ public class FridgeService {
      */
     public void deleteFridge(Long fridgeId, Long userId) {
         Fridge fridge = fridgeRepository.findById(fridgeId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 냉장고입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 냉장고입니다."));
 
         // 소유자 확인
         if (!fridge.getUser().getId().equals(userId)) {
@@ -127,7 +148,7 @@ public class FridgeService {
         }
 
         // 메인 냉장고는 삭제 불가
-        if ("메인 냉장고".equals(fridge.getName())) {
+        if (Boolean.TRUE.equals(fridge.getIsMain())) {
             throw new IllegalArgumentException("메인 냉장고는 삭제할 수 없습니다.");
         }
 
@@ -140,7 +161,7 @@ public class FridgeService {
     @Transactional(readOnly = true)
     public FridgeStatsDTO getFridgeStats(Long fridgeId, Long userId) {
         Fridge fridge = fridgeRepository.findById(fridgeId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 냉장고입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 냉장고입니다."));
 
         // 소유자 확인
         if (!fridge.getUser().getId().equals(userId)) {
@@ -156,7 +177,7 @@ public class FridgeService {
     @Transactional(readOnly = true)
     public List<ItemSummaryDTO> getExpiringSoonItems(Long fridgeId, Long userId, int days) {
         Fridge fridge = fridgeRepository.findById(fridgeId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 냉장고입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 냉장고입니다."));
 
         // 소유자 확인
         if (!fridge.getUser().getId().equals(userId)) {
@@ -167,14 +188,14 @@ public class FridgeService {
 
         // 냉장실 아이템
         fridge.getFridgeItems().stream()
-            .filter(item -> item.isExpiringSoon(days))
-            .forEach(item -> expiringSoonItems.add(new ItemSummaryDTO(item, "냉장실")));
+                .filter(item -> item.isExpiringSoon(days))
+                .forEach(item -> expiringSoonItems.add(new ItemSummaryDTO(item, "냉장실")));
 
         // 냉동실 아이템
         fridge.getFreezerItems().stream()
-            .filter(item -> item.getExpirationDate() != null)
-            .filter(item -> ChronoUnit.DAYS.between(LocalDate.now(), item.getExpirationDate()) <= days)
-            .forEach(item -> expiringSoonItems.add(new ItemSummaryDTO(item, "냉동실")));
+                .filter(item -> item.getExpirationDate() != null)
+                .filter(item -> ChronoUnit.DAYS.between(LocalDate.now(), item.getExpirationDate()) <= days)
+                .forEach(item -> expiringSoonItems.add(new ItemSummaryDTO(item, "냉동실")));
 
         // 유통기한 임박 순으로 정렬
         expiringSoonItems.sort(Comparator.comparing(ItemSummaryDTO::getDaysUntilExpiration));
