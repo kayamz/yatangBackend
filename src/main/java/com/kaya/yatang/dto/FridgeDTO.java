@@ -36,6 +36,8 @@ public class FridgeDTO {
         this.description = fridge.getDescription();
         this.createDate = fridge.getCreateDate();
         this.updatedAt = fridge.getUpdatedAt();
+        this.isMain = fridge.getIsMain();
+        this.deleted = fridge.getDeleted();
 
         // 사용자 정보
         if (fridge.getUser() != null) {
