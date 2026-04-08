@@ -1,5 +1,6 @@
 package com.kaya.yatang.controller;
 
+import com.kaya.yatang.dto.AggregatedItemDTO;
 import com.kaya.yatang.dto.FridgeDTO;
 import com.kaya.yatang.dto.FridgeStatsDTO;
 import com.kaya.yatang.dto.ItemSummaryDTO;
@@ -56,6 +57,14 @@ public class FridgeController {
     public ResponseEntity<FridgeDTO> getMainFridge(@RequestParam Long userId) {
         FridgeDTO mainFridge = fridgeService.getMainFridge(userId);
         return ResponseEntity.ok(mainFridge);
+    }
+
+    /**
+     * 모든 냉장고의 재료 전체 보기 (냉장실 + 냉동실)
+     */
+    @GetMapping("/all-items")
+    public ResponseEntity<List<AggregatedItemDTO>> getAllItemsAcrossFridges(@RequestParam Long userId) {
+        return ResponseEntity.ok(fridgeService.getAllItemsAcrossFridges(userId));
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.kaya.yatang.controller;
 
 import com.kaya.yatang.dto.UserDTO;
+import com.kaya.yatang.dto.request.GuestImportRequest;
 import com.kaya.yatang.dto.request.NicknameUpdateRequest;
 import com.kaya.yatang.dto.request.PasswordUpdateRequest;
 import com.kaya.yatang.dto.request.SignupRequest;
@@ -99,5 +100,16 @@ public class UserController {
 
         userService.updatePassword(userId, request.getCurrentPassword(), request.getNewPassword());
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 게스트(로컬) 기록을 로그인 계정으로 병합(import)
+     */
+    @PostMapping("/{userId}/guest-import")
+    public ResponseEntity<Map<String, Object>> importGuestData(
+            @PathVariable Long userId,
+            @RequestBody GuestImportRequest request) {
+        Map<String, Object> result = userService.importGuestData(userId, request);
+        return ResponseEntity.ok(result);
     }
 }

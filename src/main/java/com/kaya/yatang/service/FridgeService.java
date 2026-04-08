@@ -1,9 +1,12 @@
 package com.kaya.yatang.service;
 
 import com.kaya.yatang.db.entity.Fridge;
+import com.kaya.yatang.db.entity.FreezerItem;
+import com.kaya.yatang.db.entity.FridgeItem;
 import com.kaya.yatang.db.repository.FridgeRepository;
 import com.kaya.yatang.db.entity.User;
 import com.kaya.yatang.db.repository.UserRepository;
+import com.kaya.yatang.dto.AggregatedItemDTO;
 import com.kaya.yatang.dto.FridgeDTO;
 import com.kaya.yatang.dto.FridgeStatsDTO;
 import com.kaya.yatang.dto.ItemSummaryDTO;
@@ -13,9 +16,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -201,5 +204,26 @@ public class FridgeService {
         expiringSoonItems.sort(Comparator.comparing(ItemSummaryDTO::getDaysUntilExpiration));
 
         return expiringSoonItems;
+    }
+
+    /**
+     * 사용자 소유 모든 냉장고의 냉장실·냉동실 아이템을 한 목록으로 반환
+     */
+    @Transactional(readOnly = true)
+    public List<AggregatedItemDTO> getAllItemsAcrossFridges(Long userId) {
+        User user = userRepository.findById(Objects.requireNonNull(userId, "userId"))
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+        List<AggregatedItemDTO> out = new ArrayList<>();
+        for (Fridge fridge : user.getFridges()) {
+            String fname = fridge.getName();
+            for (FridgeItem item : fridge.getFridgeItems()) {
+                out.add(AggregatedItemDTO.fromFridgeItem(item, fname));
+            }
+            for (FreezerItem item : fridge.getFreezerItems()) {
+                out.add(AggregatedItemDTO.fromFreezerItem(item, fname));
+            }
+        }
+        out.sort(Comparator.comparing(AggregatedItemDTO::getName, String.CASE_INSENSITIVE_ORDER));
+        return out;
     }
 }

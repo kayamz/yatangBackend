@@ -1,22 +1,29 @@
 package com.kaya.yatang.service;
 
 import com.kaya.yatang.code.LoginType;
+import com.kaya.yatang.db.entity.FreezerItem;
 import com.kaya.yatang.db.entity.Fridge;
+import com.kaya.yatang.db.entity.FridgeItem;
 import com.kaya.yatang.db.repository.FridgeRepository;
+import com.kaya.yatang.db.repository.FreezerItemRepository;
+import com.kaya.yatang.db.repository.FridgeItemRepository;
 import com.kaya.yatang.dto.UserDTO;
 import com.kaya.yatang.db.entity.User;
 import com.kaya.yatang.db.repository.UserRepository;
+import com.kaya.yatang.dto.request.GuestImportRequest;
 import com.kaya.yatang.dto.request.NicknameUpdateRequest;
+import com.kaya.yatang.dto.request.ItemRequest;
 import com.kaya.yatang.dto.request.SignupRequest;
 import com.kaya.yatang.dto.response.SignupResponse;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 @Service
 @Transactional
@@ -25,6 +32,8 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final FridgeRepository fridgeRepository;
+    private final FridgeItemRepository fridgeItemRepository;
+    private final FreezerItemRepository freezerItemRepository;
     private final PasswordEncoder passwordEncoder;
 
     /**
@@ -75,7 +84,7 @@ public class UserService {
      * 닉네임 업데이트
      */
     public UserDTO updateNickname(Long userId, NicknameUpdateRequest request) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(Objects.requireNonNull(userId, "userId"))
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         // 닉네임 중복 확인 (데이터 무결성)
@@ -94,7 +103,7 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public UserDTO getUserProfile(Long userId) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(Objects.requireNonNull(userId, "userId"))
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         return new UserDTO(user);
@@ -151,7 +160,7 @@ public class UserService {
      * 비밀번호 변경
      */
     public void updatePassword(Long userId, String currentPassword, String newPassword) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(Objects.requireNonNull(userId, "userId"))
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
@@ -160,5 +169,113 @@ public class UserService {
 
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+    }
+
+    /**
+     * 게스트(로컬) 데이터를 로그인 계정으로 병합(import)
+     *
+     * 정책:
+     * - 서버의 메인 냉장고는 유지 (import된 냉장고는 모두 isMain=false로 저장)
+     * - 냉장고 이름이 중복되면 suffix를 붙여 고유하게 생성
+     * - 아이템은 그대로 생성 (단, quantity/unit이 없으면 기본값 적용)
+     */
+    public Map<String, Object> importGuestData(Long userId, GuestImportRequest request) {
+        User user = userRepository.findById(Objects.requireNonNull(userId, "userId"))
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        List<Fridge> existingFridges = fridgeRepository.findByUserId(Objects.requireNonNull(userId, "userId"));
+
+        int createdFridges = 0;
+        int createdFridgeItems = 0;
+        int createdFreezerItems = 0;
+
+        if (request == null || request.getFridges() == null) {
+            Map<String, Object> res = new HashMap<>();
+            res.put("message", "가져올 데이터가 없습니다.");
+            res.put("createdFridges", 0);
+            res.put("createdFridgeItems", 0);
+            res.put("createdFreezerItems", 0);
+            return res;
+        }
+
+        for (GuestImportRequest.GuestImportedFridge imported : request.getFridges()) {
+            if (imported == null) continue;
+
+            String baseName = imported.getName() != null && !imported.getName().trim().isEmpty()
+                    ? imported.getName().trim()
+                    : "가져온 냉장고";
+            String uniqueName = makeUniqueFridgeName(existingFridges, baseName);
+
+            Fridge fridge = new Fridge();
+            fridge.setName(uniqueName);
+            fridge.setDescription(imported.getDescription() == null ? "" : imported.getDescription());
+            fridge.setUser(user);
+            fridge.setIsMain(false);
+            fridge.setDeleted(false);
+
+            Fridge savedFridge = fridgeRepository.save(fridge);
+            existingFridges.add(savedFridge);
+            createdFridges++;
+
+            if (imported.getFridgeItems() != null) {
+                for (ItemRequest itemReq : imported.getFridgeItems()) {
+                    if (itemReq == null) continue;
+                    FridgeItem item = FridgeItem.builder()
+                            .fridge(savedFridge)
+                            .name(itemReq.getName())
+                            .quantity(itemReq.getQuantity() != null ? itemReq.getQuantity() : 1)
+                            .unit(itemReq.getUnit() != null ? itemReq.getUnit() : "개")
+                            .expirationDate(itemReq.getExpirationDate())
+                            .manufactureDate(itemReq.getManufactureDate())
+                            .memo(itemReq.getMemo())
+                            .build();
+                    fridgeItemRepository.save(Objects.requireNonNull(item, "fridgeItem"));
+                    createdFridgeItems++;
+                }
+            }
+
+            if (imported.getFreezerItems() != null) {
+                for (ItemRequest itemReq : imported.getFreezerItems()) {
+                    if (itemReq == null) continue;
+                    FreezerItem item = FreezerItem.builder()
+                            .fridge(savedFridge)
+                            .name(itemReq.getName())
+                            .quantity(itemReq.getQuantity() != null ? itemReq.getQuantity() : 1)
+                            .unit(itemReq.getUnit() != null ? itemReq.getUnit() : "개")
+                            .expirationDate(itemReq.getExpirationDate())
+                            .manufactureDate(itemReq.getManufactureDate())
+                            .freezeDate(itemReq.getFreezeDate())
+                            .memo(itemReq.getMemo())
+                            .build();
+                    freezerItemRepository.save(Objects.requireNonNull(item, "freezerItem"));
+                    createdFreezerItems++;
+                }
+            }
+        }
+
+        Map<String, Object> res = new HashMap<>();
+        res.put("message", "게스트 기록이 병합되었습니다.");
+        res.put("createdFridges", createdFridges);
+        res.put("createdFridgeItems", createdFridgeItems);
+        res.put("createdFreezerItems", createdFreezerItems);
+        return res;
+    }
+
+    private String makeUniqueFridgeName(List<Fridge> existingFridges, String baseName) {
+        String candidate = baseName;
+        int n = 1;
+        while (fridgeNameExists(existingFridges, candidate)) {
+            n++;
+            candidate = baseName + " (가져옴 " + n + ")";
+        }
+        return candidate;
+    }
+
+    private boolean fridgeNameExists(List<Fridge> existingFridges, String name) {
+        if (existingFridges == null) return false;
+        for (Fridge f : existingFridges) {
+            if (f != null && f.getName() != null && f.getName().equals(name)) return true;
+        }
+        return false;
     }
 }
