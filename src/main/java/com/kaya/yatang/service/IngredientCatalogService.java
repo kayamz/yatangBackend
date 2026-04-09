@@ -24,8 +24,9 @@ public class IngredientCatalogService {
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
-    public List<IngredientCatalogDTO> listCatalog(String q, Long userId) {
+    public List<IngredientCatalogDTO> listCatalog(String q, Long userId, String category) {
         String keyword = q == null ? "" : q.trim();
+        String cat = category == null ? "" : category.trim();
         List<IngredientCatalogEntry> system;
         if (keyword.isEmpty()) {
             system = catalogRepository.findByUserIsNullOrderByNameAsc();
@@ -47,6 +48,24 @@ public class IngredientCatalogService {
             }
         }
 
+        if (!cat.isEmpty() && !"전체".equals(cat)) {
+            final String filter = cat;
+            merged = merged.stream()
+                    .filter(e -> {
+                        if ("직접 추가".equals(filter)) {
+                            return e.getUser() != null;
+                        }
+                        if (e.getUser() != null) {
+                            return false;
+                        }
+                        if ("기타".equals(filter)) {
+                            return e.getCategory() == null || e.getCategory().isBlank();
+                        }
+                        return e.getCategory() != null && filter.equals(e.getCategory());
+                    })
+                    .collect(Collectors.toList());
+        }
+
         merged.sort(Comparator.comparing(IngredientCatalogEntry::getName, String.CASE_INSENSITIVE_ORDER));
         return merged.stream().map(IngredientCatalogDTO::new).collect(Collectors.toList());
     }
@@ -61,14 +80,28 @@ public class IngredientCatalogService {
         String unit = request.getDefaultUnit() != null && !request.getDefaultUnit().trim().isEmpty()
                 ? request.getDefaultUnit().trim()
                 : "개";
+        if (catalogRepository.existsByUserIsNullAndNameIgnoreCase(name)) {
+            throw new IllegalArgumentException("이미 목록에 있는 재료입니다.");
+        }
         if (catalogRepository.existsByUserIdAndNameIgnoreCase(userId, name)) {
             throw new IllegalArgumentException("이미 목록에 있는 재료입니다.");
         }
         IngredientCatalogEntry saved = catalogRepository.save(IngredientCatalogEntry.builder()
                 .name(name)
                 .defaultUnit(unit)
+                .category(null)
                 .user(user)
                 .build());
         return new IngredientCatalogDTO(saved);
+    }
+
+    public void deleteCustom(Long userId, Long entryId) {
+        if (entryId == null) {
+            throw new IllegalArgumentException("항목을 찾을 수 없습니다.");
+        }
+        if (!catalogRepository.existsByIdAndUserId(entryId, userId)) {
+            throw new IllegalArgumentException("삭제할 수 없는 항목입니다.");
+        }
+        catalogRepository.deleteByIdAndUserId(entryId, userId);
     }
 }

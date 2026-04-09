@@ -13,6 +13,8 @@ import lombok.Setter;
 @AllArgsConstructor
 public class GuestImportRequest {
     private List<GuestImportedFridge> fridges = new ArrayList<>();
+    /** 게스트 로컬 상온보관 목록 (사용자당 하나의 공간) */
+    private List<ItemRequest> pantryItems = new ArrayList<>();
 
     @Getter
     @Setter

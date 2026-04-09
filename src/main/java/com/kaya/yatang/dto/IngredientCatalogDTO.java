@@ -14,12 +14,14 @@ public class IngredientCatalogDTO {
     private Long id;
     private String name;
     private String defaultUnit;
+    private String category;
     private boolean custom;
 
     public IngredientCatalogDTO(IngredientCatalogEntry e) {
         this.id = e.getId();
         this.name = e.getName();
         this.defaultUnit = e.getDefaultUnit();
+        this.category = e.getCategory();
         this.custom = e.getUser() != null;
     }
 }

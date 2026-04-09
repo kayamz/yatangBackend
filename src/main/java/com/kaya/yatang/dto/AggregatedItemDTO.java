@@ -2,7 +2,9 @@ package com.kaya.yatang.dto;
 
 import com.kaya.yatang.db.entity.FreezerItem;
 import com.kaya.yatang.db.entity.FridgeItem;
+import com.kaya.yatang.db.entity.PantryItem;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -27,6 +29,8 @@ public class AggregatedItemDTO {
     private LocalDate manufactureDate;
     private String memo;
     private Long daysUntilExpiration;
+    /** 등록일시(생성일) */
+    private LocalDateTime createdAt;
 
     public static AggregatedItemDTO fromFridgeItem(FridgeItem item, String fridgeName) {
         return AggregatedItemDTO.builder()
@@ -41,6 +45,7 @@ public class AggregatedItemDTO {
                 .manufactureDate(item.getManufactureDate())
                 .memo(item.getMemo())
                 .daysUntilExpiration(item.getDaysUntilExpiration())
+                .createdAt(item.getCreatedAt())
                 .build();
     }
 
@@ -57,6 +62,24 @@ public class AggregatedItemDTO {
                 .manufactureDate(item.getManufactureDate())
                 .memo(item.getMemo())
                 .daysUntilExpiration(item.getDaysUntilExpiration())
+                .createdAt(item.getCreatedAt())
+                .build();
+    }
+
+    public static AggregatedItemDTO fromPantryItem(PantryItem item) {
+        return AggregatedItemDTO.builder()
+                .itemId(item.getId())
+                .fridgeId(null)
+                .fridgeName("상온보관")
+                .storageType("상온보관")
+                .name(item.getName())
+                .quantity(item.getQuantity())
+                .unit(item.getUnit())
+                .expirationDate(item.getExpirationDate())
+                .manufactureDate(item.getManufactureDate())
+                .memo(item.getMemo())
+                .daysUntilExpiration(item.getDaysUntilExpiration())
+                .createdAt(item.getCreatedAt())
                 .build();
     }
 }

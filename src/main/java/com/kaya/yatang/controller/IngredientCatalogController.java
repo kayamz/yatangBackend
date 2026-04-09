@@ -19,8 +19,9 @@ public class IngredientCatalogController {
     @GetMapping
     public ResponseEntity<List<IngredientCatalogDTO>> list(
             @RequestParam(required = false) String q,
-            @RequestParam(required = false) Long userId) {
-        return ResponseEntity.ok(ingredientCatalogService.listCatalog(q, userId));
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) String category) {
+        return ResponseEntity.ok(ingredientCatalogService.listCatalog(q, userId, category));
     }
 
     @PostMapping
@@ -29,5 +30,11 @@ public class IngredientCatalogController {
             @RequestBody IngredientCatalogCreateRequest request) {
         IngredientCatalogDTO dto = ingredientCatalogService.addCustom(userId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCustom(@RequestParam Long userId, @PathVariable Long id) {
+        ingredientCatalogService.deleteCustom(userId, id);
+        return ResponseEntity.noContent().build();
     }
 }

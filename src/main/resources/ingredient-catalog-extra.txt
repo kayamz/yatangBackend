@@ -1,0 +1,2 @@
+# Incremental system catalog additions (category|name|defaultUnit).
+# Merged defaults live in ingredient-catalog-default.txt; add new lines here for upsert on deploy.

@@ -3,8 +3,10 @@ package com.kaya.yatang.service;
 import com.kaya.yatang.db.entity.Fridge;
 import com.kaya.yatang.db.entity.FreezerItem;
 import com.kaya.yatang.db.entity.FridgeItem;
+import com.kaya.yatang.db.entity.PantryItem;
 import com.kaya.yatang.db.repository.FridgeRepository;
 import com.kaya.yatang.db.entity.User;
+import com.kaya.yatang.db.repository.PantryItemRepository;
 import com.kaya.yatang.db.repository.UserRepository;
 import com.kaya.yatang.dto.AggregatedItemDTO;
 import com.kaya.yatang.dto.FridgeDTO;
@@ -29,6 +31,7 @@ public class FridgeService {
 
     private final FridgeRepository fridgeRepository;
     private final UserRepository userRepository;
+    private final PantryItemRepository pantryItemRepository;
 
     /**
      * 냉장고 생성
@@ -222,6 +225,9 @@ public class FridgeService {
             for (FreezerItem item : fridge.getFreezerItems()) {
                 out.add(AggregatedItemDTO.fromFreezerItem(item, fname));
             }
+        }
+        for (PantryItem p : pantryItemRepository.findByUser_Id(userId)) {
+            out.add(AggregatedItemDTO.fromPantryItem(p));
         }
         out.sort(Comparator.comparing(AggregatedItemDTO::getName, String.CASE_INSENSITIVE_ORDER));
         return out;

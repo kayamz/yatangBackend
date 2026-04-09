@@ -4,9 +4,11 @@ import com.kaya.yatang.code.LoginType;
 import com.kaya.yatang.db.entity.FreezerItem;
 import com.kaya.yatang.db.entity.Fridge;
 import com.kaya.yatang.db.entity.FridgeItem;
+import com.kaya.yatang.db.entity.PantryItem;
 import com.kaya.yatang.db.repository.FridgeRepository;
 import com.kaya.yatang.db.repository.FreezerItemRepository;
 import com.kaya.yatang.db.repository.FridgeItemRepository;
+import com.kaya.yatang.db.repository.PantryItemRepository;
 import com.kaya.yatang.dto.UserDTO;
 import com.kaya.yatang.db.entity.User;
 import com.kaya.yatang.db.repository.UserRepository;
@@ -34,6 +36,7 @@ public class UserService {
     private final FridgeRepository fridgeRepository;
     private final FridgeItemRepository fridgeItemRepository;
     private final FreezerItemRepository freezerItemRepository;
+    private final PantryItemRepository pantryItemRepository;
     private final PasswordEncoder passwordEncoder;
 
     /**
@@ -188,16 +191,20 @@ public class UserService {
         int createdFridges = 0;
         int createdFridgeItems = 0;
         int createdFreezerItems = 0;
+        int createdPantryItems = 0;
 
-        if (request == null || request.getFridges() == null) {
+        if (request == null || (request.getFridges() == null || request.getFridges().isEmpty())
+                && (request.getPantryItems() == null || request.getPantryItems().isEmpty())) {
             Map<String, Object> res = new HashMap<>();
             res.put("message", "가져올 데이터가 없습니다.");
             res.put("createdFridges", 0);
             res.put("createdFridgeItems", 0);
             res.put("createdFreezerItems", 0);
+            res.put("createdPantryItems", 0);
             return res;
         }
 
+        if (request.getFridges() != null) {
         for (GuestImportRequest.GuestImportedFridge imported : request.getFridges()) {
             if (imported == null) continue;
 
@@ -252,12 +259,33 @@ public class UserService {
                 }
             }
         }
+        }
+
+        if (request.getPantryItems() != null) {
+            for (ItemRequest itemReq : request.getPantryItems()) {
+                if (itemReq == null || itemReq.getName() == null || itemReq.getName().trim().isEmpty()) {
+                    continue;
+                }
+                PantryItem item = PantryItem.builder()
+                        .user(user)
+                        .name(itemReq.getName().trim())
+                        .quantity(itemReq.getQuantity() != null ? itemReq.getQuantity() : 1)
+                        .unit(itemReq.getUnit() != null ? itemReq.getUnit() : "개")
+                        .expirationDate(itemReq.getExpirationDate())
+                        .manufactureDate(itemReq.getManufactureDate())
+                        .memo(itemReq.getMemo())
+                        .build();
+                pantryItemRepository.save(Objects.requireNonNull(item, "pantryItem"));
+                createdPantryItems++;
+            }
+        }
 
         Map<String, Object> res = new HashMap<>();
         res.put("message", "게스트 기록이 병합되었습니다.");
         res.put("createdFridges", createdFridges);
         res.put("createdFridgeItems", createdFridgeItems);
         res.put("createdFreezerItems", createdFreezerItems);
+        res.put("createdPantryItems", createdPantryItems);
         return res;
     }
 

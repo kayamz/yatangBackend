@@ -22,6 +22,10 @@ public class IngredientCatalogEntry {
     @Column(name = "default_unit", nullable = false, length = 20)
     private String defaultUnit;
 
+    /** 시스템 공용 분류 (null이면 기타·구버전 데이터) */
+    @Column(length = 80)
+    private String category;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
