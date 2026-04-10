@@ -13,6 +13,13 @@ spring:
       - classpath:application-data-source.yml
       - classpath:application-data-default.yml
 
+# OpenAI (레시피 추천). 환경변수 OPENAI_API_KEY 설정 권장.
+yatang:
+  openai:
+    api-key: ${OPENAI_API_KEY:}
+    model: gpt-4o-mini
+    base-url: https://api.openai.com/v1
+
 springdoc:
   api-docs:
     path: /api-docs
