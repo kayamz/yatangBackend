@@ -16,4 +16,8 @@ public class RecipeIngredientAmountDto {
     /** 예: "200g", "1/2큰술", "3개" */
     private String amount;
     private String note;
+    /**
+     * 대체 가능한 재료 (예: 굴소스 → "치킨스톡"). 없거나 불필요하면 빈 문자열.
+     */
+    private String substitute;
 }

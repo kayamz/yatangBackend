@@ -1,6 +1,5 @@
 package com.kaya.yatang.security;
 
-import com.kaya.yatang.code.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
@@ -23,8 +22,12 @@ public class JwtTokenProvider {
 
     private String secretKey = "test";
 
-    // 토큰 유효시간 300분
-    private long tokenValidTime = 300 * 60 * 1000L;
+    /**
+     * 앱을 삭제하지 않는 한 로그인 유지에 가깝게 동작하도록 긴 만료(기본 약 10년).
+     * 운영에서는 {@code jwt.expiration-ms} 로 조정 가능.
+     */
+    @org.springframework.beans.factory.annotation.Value("${jwt.expiration-ms:315360000000}")
+    private long tokenValidTime;
 
     private final UserDetailsService userDetailsService;
 

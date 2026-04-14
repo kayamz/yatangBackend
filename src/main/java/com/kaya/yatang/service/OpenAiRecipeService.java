@@ -101,6 +101,8 @@ public class OpenAiRecipeService {
 
                 이 재료들을 최대한 활용해 실제로 만들 수 있는 요리 레시피를 정확히 3개만 제안하세요.
                 모든 재료가 있을 필요는 없으며, 없는 것은 missingIngredients에 적으세요.
+                각 레시피의 ingredients(및 필요 시 missingIngredients) 항목마다 substitute 필드를 채우되,
+                해당 재료를 흔히 바꿔 쓸 수 있는 경우에만 짧게 적고(예: 치킨스톡), 없으면 빈 문자열로 두세요.
                 """.formatted(list);
     }
 
@@ -119,29 +121,80 @@ public class OpenAiRecipeService {
         sys.put(
                 "content",
                 """
-                        당신은 한국 가정식 요리 전문가입니다. 반드시 유효한 JSON만 출력합니다. 마크다운 코드블록을 쓰지 마세요.
-
-                        출력 JSON 스키마:
-                        {
-                          "recipes": [
-                            {
-                              "title": "요리 이름",
-                              "cookMinutes": 정수(분),
-                              "servings": 정수(인분),
-                              "ingredients": [ { "name": "재료명", "amount": "n인분 기준 양(예: 200g, 1큰술)", "note": "부가설명 또는 빈 문자열" } ],
-                              "steps": [ "1단계 설명", "2단계 설명", ... ],
-                              "missingIngredients": [ { "name": "부족한 재료", "amount": "필요량", "note": "왜 필요한지 짧게" } ],
-                              "usesFromInventory": [ "보유 재고에서 이렇게 쓴다" ]
-                            }
-                          ]
-                        }
-
-                        규칙:
-                        - recipes 배열 길이는 정확히 3
-                        - 보유 재료와 무관한 요리는 제안하지 말 것 (최소 1~2개 이상 재고 연계)
-                        - steps는 번호 순서대로 명확하게
-                        - amount 필드는 한국어 단위(g, ml, 큰술, 개 등)를 사용해도 됨
-                        """);
+            당신은 요리 전문가입니다. 반드시 유효한 JSON만 출력합니다.
+            
+            출력 JSON 스키마:
+            {
+              "recipes": [
+                {
+                  "title": "요리 이름",
+                  "cookMinutes": 정수(분),
+                  "servings": 정수(인분),
+                  "ingredients": [
+                    {
+                      "name": "재료명",
+                      "amount": "n인분 기준 양(예: 200g, 1큰술)",
+                      "note": "부가설명 또는 빈 문자열",
+                      "substitute": "대체 가능 시 짧은 한글(예: 치킨스톡, 액젓). 대체가 없거나 불필요하면 빈 문자열"
+                    }
+                  ],
+                  "steps": [ "1단계 설명", "2단계 설명" ],
+                  "missingIngredients": [
+                    {
+                      "name": "부족한 재료",
+                      "amount": "필요량",
+                      "note": "왜 필요한지 짧게",
+                      "substitute": "구하기 어려울 때 대체 재료(짧게). 없으면 빈 문자열"
+                    }
+                  ],
+                  "usesFromInventory": [ "보유 재고 활용 방식" ]
+                }
+              ]
+            }
+            
+            규칙:
+            - 반드시 JSON.parse 가능한 형식으로만 출력하세요.
+            - 문자열 외의 설명, 코드블록, 주석을 포함하지 마세요.
+            - 마지막 쉼표를 포함하지 마세요.
+            
+            - recipes 배열 길이는 정확히 3
+            - 각 레시피는 최소 1~2개의 보유 재료를 반드시 사용
+            - 실제로 조리 가능한 현실적인 요리만 제안
+            - 일반 가정에서 가능한 조리법만 사용
+            
+            - ingredients·missingIngredients 항목마다 substitute 필드를 포함할 것.
+              재료마다 흔히 쓰는 대체재가 있으면 짧게 적고, 없으면 "".
+              사용자가 넘긴 보유 재료와 맥락을 고려해 실용적으로 제안.
+            - steps는 번호 순서대로 명확하게 작성
+            - amount는 g, ml, 큰술, 개 등의 단위를 사용
+            """
+        );
+//        sys.put(
+//                "content",
+//                """
+//                        당신은 요리 전문가입니다. 반드시 유효한 JSON만 출력합니다. 마크다운 코드블록을 쓰지 마세요.
+//
+//                        출력 JSON 스키마:
+//                        {
+//                          "recipes": [
+//                            {
+//                              "title": "요리 이름",
+//                              "cookMinutes": 정수(분),
+//                              "servings": 정수(인분),
+//                              "ingredients": [ { "name": "재료명", "amount": "n인분 기준 양(예: 200g, 1큰술)", "note": "부가설명 또는 빈 문자열" } ],
+//                              "steps": [ "1단계 설명", "2단계 설명", ... ],
+//                              "missingIngredients": [ { "name": "부족한 재료", "amount": "필요량", "note": "왜 필요한지 짧게" } ],
+//                              "usesFromInventory": [ "보유 재고에서 이렇게 쓴다" ]
+//                            }
+//                          ]
+//                        }
+//
+//                        규칙:
+//                        - recipes 배열 길이는 정확히 3
+//                        - 보유 재료와 무관한 요리는 제안하지 말 것 (최소 1~2개 이상 재고 연계)
+//                        - steps는 번호 순서대로 명확하게
+//                        - amount 필드는 한국어 단위(g, ml, 큰술, 개 등)를 사용해도 됨
+//                        """);
         messages.add(sys);
 
         ObjectNode user = objectMapper.createObjectNode();
