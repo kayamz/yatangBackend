@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * 기본 식재료 카탈로그(시스템 공용, user_id NULL)를 최초 1회 시드합니다.
- * 리소스 형식: category|name|defaultUnit (주석·빈 줄 무시)
+ * 리소스 형식: category|name|defaultUnit [|iconImageFile] (4번째 칸 생략 가능, 영문 파일명 예: onion.png)
  */
 @Component
 @Order(50)
@@ -57,11 +57,12 @@ public class IngredientCatalogBootstrap implements CommandLineRunner {
                     if (line.isBlank() || line.startsWith("#")) {
                         continue;
                     }
-                    String[] p = line.split("\\|", 3);
+                    String[] p = line.split("\\|", -1);
                     if (p.length >= 3) {
                         String category = p[0].trim();
                         String name = p[1].trim();
                         String unit = p[2].trim();
+                        String iconFile = p.length >= 4 ? p[3].trim() : "";
                         if (name.isEmpty() || unit.isEmpty()) {
                             continue;
                         }
@@ -72,6 +73,7 @@ public class IngredientCatalogBootstrap implements CommandLineRunner {
                                 .category(category.isEmpty() ? null : category)
                                 .name(name)
                                 .defaultUnit(unit)
+                                .iconImageFile(iconFile.isEmpty() ? null : iconFile)
                                 .user(null)
                                 .build());
                     } else {

@@ -26,6 +26,13 @@ public class IngredientCatalogEntry {
     @Column(length = 80)
     private String category;
 
+    /**
+     * 시스템 카탈로그 전용: public 폴더 기준 아이콘 파일명(영문). 예: onion.png 또는 icons/onion.png
+     * 관리용이며 UI에 노출하지 않고, 프론트에서 {@code /ingredient-icons/} 등과 조합합니다.
+     */
+    @Column(name = "icon_image_file", length = 255)
+    private String iconImageFile;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;

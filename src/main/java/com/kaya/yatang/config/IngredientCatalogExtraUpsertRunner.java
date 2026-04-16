@@ -15,7 +15,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
 /**
- * classpath의 ingredient-catalog-extra.txt(카테고리|이름|단위)에 있는 항목을 시스템 카탈로그에 없으면 삽입합니다.
+ * classpath의 ingredient-catalog-extra.txt(카테고리|이름|단위[|iconImageFile])에 있는 항목을 시스템 카탈로그에 없으면 삽입합니다.
  */
 @Component
 @Order(55)
@@ -35,13 +35,14 @@ public class IngredientCatalogExtraUpsertRunner implements CommandLineRunner {
             if (line == null || line.isBlank() || line.startsWith("#")) {
                 continue;
             }
-            String[] p = line.split("\\|", 3);
+            String[] p = line.split("\\|", -1);
             if (p.length < 3) {
                 continue;
             }
             String category = p[0].trim();
             String name = p[1].trim();
             String unit = p[2].trim();
+            String iconFile = p.length >= 4 ? p[3].trim() : "";
             if (name.isEmpty() || unit.isEmpty()) {
                 continue;
             }
@@ -52,6 +53,7 @@ public class IngredientCatalogExtraUpsertRunner implements CommandLineRunner {
                     .category(category.isEmpty() ? null : category)
                     .name(name)
                     .defaultUnit(unit)
+                    .iconImageFile(iconFile.isEmpty() ? null : iconFile)
                     .user(null)
                     .build());
         }

@@ -25,6 +25,8 @@ public interface IngredientCatalogEntryRepository extends JpaRepository<Ingredie
 
     boolean existsByUserIsNullAndNameIgnoreCase(String name);
 
+    List<IngredientCatalogEntry> findByUserIsNullAndIconImageFileIsNotNull();
+
     @Query("SELECT COUNT(e) > 0 FROM IngredientCatalogEntry e WHERE e.id = :id AND e.user.id = :userId")
     boolean existsByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
 

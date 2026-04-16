@@ -8,8 +8,10 @@ import com.kaya.yatang.dto.IngredientCatalogDTO;
 import com.kaya.yatang.dto.request.IngredientCatalogCreateRequest;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,7 @@ public class IngredientCatalogService {
 
     private final IngredientCatalogEntryRepository catalogRepository;
     private final UserRepository userRepository;
+    private final UserIngredientImageService userIngredientImageService;
 
     @Transactional(readOnly = true)
     public List<IngredientCatalogDTO> listCatalog(String q, Long userId, String category) {
@@ -67,7 +70,45 @@ public class IngredientCatalogService {
         }
 
         merged.sort(Comparator.comparing(IngredientCatalogEntry::getName, String.CASE_INSENSITIVE_ORDER));
-        return merged.stream().map(IngredientCatalogDTO::new).collect(Collectors.toList());
+        List<IngredientCatalogDTO> list =
+                merged.stream().map(IngredientCatalogDTO::new).collect(Collectors.toList());
+        if (userId != null) {
+            Map<String, String> publicIdByName = userIngredientImageService.getPublicIdByIngredientNameLower(userId);
+            for (IngredientCatalogDTO dto : list) {
+                if (dto.getName() == null || !dto.isCustom()) {
+                    continue;
+                }
+                String pid = publicIdByName.get(dto.getName().trim().toLowerCase(Locale.ROOT));
+                if (pid != null) {
+                    dto.setUserImageUrl("/api/public/ingredient-images/" + pid);
+                }
+            }
+        }
+        return list;
+    }
+
+    /**
+     * 시스템 카탈로그에 아이콘 파일명이 있는 항목만: 재료명(소문자) → 파일명(또는 상대경로).
+     * 프론트에서 public URL로 조합합니다.
+     */
+    @Transactional(readOnly = true)
+    public Map<String, String> getSystemIconFileByNameLower() {
+        Map<String, String> map = new HashMap<>();
+        for (IngredientCatalogEntry e : catalogRepository.findByUserIsNullAndIconImageFileIsNotNull()) {
+            if (e.getName() == null) {
+                continue;
+            }
+            String file = e.getIconImageFile();
+            if (file == null) {
+                continue;
+            }
+            file = file.trim();
+            if (file.isEmpty()) {
+                continue;
+            }
+            map.put(e.getName().trim().toLowerCase(Locale.ROOT), file);
+        }
+        return map;
     }
 
     public IngredientCatalogDTO addCustom(Long userId, IngredientCatalogCreateRequest request) {

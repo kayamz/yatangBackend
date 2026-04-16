@@ -8,7 +8,6 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -22,13 +21,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
-
-    // 비밀번호 암호화
-    @Bean
-    public BCryptPasswordEncoder passwordEncoder()
-    {
-        return new BCryptPasswordEncoder();
-    }
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     // authenticationManager를 Bean 등록
     @Bean
@@ -69,27 +62,36 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+                .sessionManagement(
+                        session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(new AntPathRequestMatcher("/api/ingredients-catalog", "GET"))
-                                .permitAll()
+                        .permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/ingredients-catalog/icon-map", "GET"))
+                        .permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/public/**"))
+                        .permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/oauth2/**"))
+                        .permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/login/oauth2/**"))
+                        .permitAll()
                         .requestMatchers(
                                 new AntPathRequestMatcher("/swagger-ui/**"),
                                 new AntPathRequestMatcher("/swagger-ui.html"),
                                 new AntPathRequestMatcher("/api-docs/**"),
                                 new AntPathRequestMatcher("/api/login"),
-                                new AntPathRequestMatcher("/api/register")
-                        ).permitAll()
-//                                .anyRequest().permitAll()
-                        .anyRequest().authenticated()
-                )
-                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
+                                new AntPathRequestMatcher("/api/register"))
+                        .permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/users/signup", "POST"))
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated())
+                .oauth2Login(oauth2 -> oauth2.successHandler(oAuth2LoginSuccessHandler))
+                .addFilterBefore(
+                        new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

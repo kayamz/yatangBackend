@@ -1,5 +1,6 @@
 package com.kaya.yatang.db.repository;
 
+import com.kaya.yatang.code.LoginType;
 import com.kaya.yatang.db.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -15,4 +16,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 //    Optional<User> findById(Long id);
     Optional<User> findByEmail(String email);
     Optional<User> findByUsername(String username);
+
+    Optional<User> findByLoginTypeAndSocialId(LoginType loginType, String socialId);
 }
