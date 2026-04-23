@@ -27,12 +27,15 @@ spring:
               - openid
               - profile
               - email
+          # 카카오: https://developers.kakao.com/docs/ko/kakaologin/rest-api — redirect_uri는 콘솔 등록값과 완전 일치 (KOE006 방지)
           kakao:
-            client-id: ${KAKAO_REST_API_KEY:changeme-kakao-rest-key}
-            client-secret: ${KAKAO_CLIENT_SECRET:changeme-kakao-secret}
+            client-id: ${KAKAO_REST_API_KEY:f4cbd04a8bcb64e7f6098425cb972dd1}
+            client-secret: ${KAKAO_CLIENT_SECRET:agKTAXB39AlHZDHowuPSNnnBruIMTKT1}
             client-authentication-method: client_secret_post
             authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            # 카카오 콘솔과 동일한 문자열. 운영은 KAKAO_OAUTH2_REDIRECT_URI 로 실제 도메인 지정.
+#            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            redirect-uri: ${KAKAO_OAUTH2_REDIRECT_URI:http://localhost:3000/login/oauth2/code/kakao}
             scope:
               - profile_nickname
               - account_email
