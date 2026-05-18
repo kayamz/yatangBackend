@@ -1,12 +1,9 @@
 package com.kaya.yatang.dto;
 
 import com.kaya.yatang.code.LoginType;
-import com.kaya.yatang.db.entity.Fridge;
 import com.kaya.yatang.db.entity.User;
-import com.kaya.yatang.db.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.*;
 
@@ -19,7 +16,6 @@ public class UserDTO {
     private Long id;
     private String username;
     private String email;
-    private String password;
     private String nickname;
     private LoginType loginType;
     private LocalDateTime createdAt;

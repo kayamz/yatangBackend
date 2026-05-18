@@ -1,7 +1,9 @@
 package com.kaya.yatang.security;
 
 import com.kaya.yatang.db.entity.User;
+import com.kaya.yatang.dto.auth.AuthTokenResponse;
 import com.kaya.yatang.service.OAuthAccountService;
+import com.kaya.yatang.service.RefreshTokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -19,8 +21,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-    private final JwtTokenProvider jwtTokenProvider;
     private final OAuthAccountService oAuthAccountService;
+    private final RefreshTokenService refreshTokenService;
 
     @Value("${yatang.oauth2.frontend-redirect-url:http://localhost:3000/oauth/callback}")
     private String frontendRedirectUrl;
@@ -37,10 +39,12 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         String registrationId = token.getAuthorizedClientRegistrationId();
 
         User user = oAuthAccountService.findOrCreateFromOAuth(registrationId, oauth2User);
-        String jwt = jwtTokenProvider.createToken(user.getId(), user.getUsername());
+        AuthTokenResponse tokens = refreshTokenService.issueTokens(user);
 
         String base = frontendRedirectUrl.split("\\?")[0];
-        String target = base + "?token=" + URLEncoder.encode(jwt, StandardCharsets.UTF_8);
+        String target = base
+                + "?accessToken=" + URLEncoder.encode(tokens.getAccessToken(), StandardCharsets.UTF_8)
+                + "&refreshToken=" + URLEncoder.encode(tokens.getRefreshToken(), StandardCharsets.UTF_8);
         getRedirectStrategy().sendRedirect(request, response, target);
     }
 }

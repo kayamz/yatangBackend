@@ -91,6 +91,6 @@ public class Fridge {
 
     // 🔹 정적 팩토리 메서드 - 메인 냉장고 생성
     public static Fridge createMainFridge(User user) {
-        return createFridge(user, true, "메인 냉장고", "회원가입시 자동으로 생성된 냉장고입니다.");
+        return createFridge(user, true, "메인 냉장고", null);
     }
 }

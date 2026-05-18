@@ -168,7 +168,6 @@
 쌀/잡곡|호두|개|walnut.png
 쌀/잡곡|호박씨|g|pumpkin-seed.png
 
-우유/유제품|계란|개|egg.png
 우유/유제품|고다치즈|개|gouda.png
 우유/유제품|그릭요거트|개|greek-yogurt.png
 우유/유제품|낫토|개|natto.png
@@ -238,6 +237,7 @@
 장/양념/소스|후추|개|pepper.png
 장/양념/소스|해바라기씨유|개|sunflower-oil.png
 
+정육/계란/가공육|계란|개|egg.png
 정육/계란/가공육|너겟|개|nugget.png
 정육/계란/가공육|닭가슴살|개|chicken-breast.png
 정육/계란/가공육|닭날개|개|chicken-wing.png

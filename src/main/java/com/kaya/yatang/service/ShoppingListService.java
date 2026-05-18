@@ -33,11 +33,16 @@ public class ShoppingListService {
             throw new IllegalArgumentException("재료 이름을 입력해주세요.");
         }
         User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        String sourceTitle = req.getSourceRecipeTitle() != null ? req.getSourceRecipeTitle().trim() : null;
+        if (sourceTitle != null && sourceTitle.isEmpty()) {
+            sourceTitle = null;
+        }
         ShoppingListItem item = ShoppingListItem.builder()
                 .user(user)
                 .ingredientName(req.getIngredientName().trim())
                 .quantityNote(req.getQuantityNote() != null ? req.getQuantityNote().trim() : null)
                 .unit(req.getUnit() != null ? req.getUnit().trim() : null)
+                .sourceRecipeTitle(sourceTitle)
                 .checked(false)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -73,6 +78,7 @@ public class ShoppingListService {
                 .ingredientName(e.getIngredientName())
                 .quantityNote(e.getQuantityNote())
                 .unit(e.getUnit())
+                .sourceRecipeTitle(e.getSourceRecipeTitle())
                 .checked(e.isChecked())
                 .createdAt(e.getCreatedAt())
                 .build();

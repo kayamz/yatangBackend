@@ -17,6 +17,7 @@ public class ShoppingListItemDTO {
     private String ingredientName;
     private String quantityNote;
     private String unit;
+    private String sourceRecipeTitle;
     private boolean checked;
     private LocalDateTime createdAt;
 }

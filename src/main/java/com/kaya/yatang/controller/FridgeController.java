@@ -5,7 +5,9 @@ import com.kaya.yatang.dto.FridgeDTO;
 import com.kaya.yatang.dto.FridgeStatsDTO;
 import com.kaya.yatang.dto.ItemSummaryDTO;
 import com.kaya.yatang.dto.request.FridgeRequest;
+import com.kaya.yatang.security.CurrentUser;
 import com.kaya.yatang.service.FridgeService;
+import org.springframework.security.core.Authentication;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,16 +30,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class FridgeController {
 
     private final FridgeService fridgeService;
+    private final CurrentUser currentUser;
 
     /**
      * 냉장고 생성
      */
     @PostMapping
     public ResponseEntity<FridgeDTO> createFridge(
-            @RequestParam Long userId,
+            Authentication authentication,
             @RequestBody FridgeRequest request) {
 
-        FridgeDTO fridge = fridgeService.createFridge(userId, request);
+        FridgeDTO fridge = fridgeService.createFridge(currentUser.id(authentication), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(fridge);
     }
 
@@ -45,8 +48,8 @@ public class FridgeController {
      * 내 냉장고 목록 조회
      */
     @GetMapping
-    public ResponseEntity<List<FridgeDTO>> getUserFridges(@RequestParam Long userId) {
-        List<FridgeDTO> fridges = fridgeService.getUserFridges(userId);
+    public ResponseEntity<List<FridgeDTO>> getUserFridges(Authentication authentication) {
+        List<FridgeDTO> fridges = fridgeService.getUserFridges(currentUser.id(authentication));
         return ResponseEntity.ok(fridges);
     }
 
@@ -54,8 +57,8 @@ public class FridgeController {
      * 메인 냉장고 조회
      */
     @GetMapping("/main")
-    public ResponseEntity<FridgeDTO> getMainFridge(@RequestParam Long userId) {
-        FridgeDTO mainFridge = fridgeService.getMainFridge(userId);
+    public ResponseEntity<FridgeDTO> getMainFridge(Authentication authentication) {
+        FridgeDTO mainFridge = fridgeService.getMainFridge(currentUser.id(authentication));
         return ResponseEntity.ok(mainFridge);
     }
 
@@ -63,8 +66,8 @@ public class FridgeController {
      * 모든 냉장고의 재료 전체 보기 (냉장실 + 냉동실)
      */
     @GetMapping("/all-items")
-    public ResponseEntity<List<AggregatedItemDTO>> getAllItemsAcrossFridges(@RequestParam Long userId) {
-        return ResponseEntity.ok(fridgeService.getAllItemsAcrossFridges(userId));
+    public ResponseEntity<List<AggregatedItemDTO>> getAllItemsAcrossFridges(Authentication authentication) {
+        return ResponseEntity.ok(fridgeService.getAllItemsAcrossFridges(currentUser.id(authentication)));
     }
 
     /**
@@ -73,9 +76,9 @@ public class FridgeController {
     @GetMapping("/{fridgeId}")
     public ResponseEntity<FridgeDTO> getFridgeById(
             @PathVariable Long fridgeId,
-            @RequestParam Long userId) {
+            Authentication authentication) {
 
-        FridgeDTO fridge = fridgeService.getFridgeById(fridgeId, userId);
+        FridgeDTO fridge = fridgeService.getFridgeById(fridgeId, currentUser.id(authentication));
         return ResponseEntity.ok(fridge);
     }
 
@@ -85,10 +88,10 @@ public class FridgeController {
     @PatchMapping("/{fridgeId}")
     public ResponseEntity<FridgeDTO> updateFridge(
             @PathVariable Long fridgeId,
-            @RequestParam Long userId,
+            Authentication authentication,
             @RequestBody FridgeRequest request) {
 
-        FridgeDTO updatedFridge = fridgeService.updateFridge(fridgeId, userId, request);
+        FridgeDTO updatedFridge = fridgeService.updateFridge(fridgeId, currentUser.id(authentication), request);
         return ResponseEntity.ok(updatedFridge);
     }
 
@@ -98,9 +101,9 @@ public class FridgeController {
     @DeleteMapping("/{fridgeId}")
     public ResponseEntity<Map<String, String>> deleteFridge(
             @PathVariable Long fridgeId,
-            @RequestParam Long userId) {
+            Authentication authentication) {
 
-        fridgeService.deleteFridge(fridgeId, userId);
+        fridgeService.deleteFridge(fridgeId, currentUser.id(authentication));
 
         Map<String, String> response = new HashMap<>();
         response.put("message", "냉장고가 삭제되었습니다.");
@@ -114,9 +117,9 @@ public class FridgeController {
     @GetMapping("/{fridgeId}/stats")
     public ResponseEntity<FridgeStatsDTO> getFridgeStats(
             @PathVariable Long fridgeId,
-            @RequestParam Long userId) {
+            Authentication authentication) {
 
-        FridgeStatsDTO stats = fridgeService.getFridgeStats(fridgeId, userId);
+        FridgeStatsDTO stats = fridgeService.getFridgeStats(fridgeId, currentUser.id(authentication));
         return ResponseEntity.ok(stats);
     }
 
@@ -126,10 +129,10 @@ public class FridgeController {
     @GetMapping("/{fridgeId}/expiring-soon")
     public ResponseEntity<List<ItemSummaryDTO>> getExpiringSoonItems(
             @PathVariable Long fridgeId,
-            @RequestParam Long userId,
+            Authentication authentication,
             @RequestParam(defaultValue = "3") int days) {
 
-        List<ItemSummaryDTO> items = fridgeService.getExpiringSoonItems(fridgeId, userId, days);
+        List<ItemSummaryDTO> items = fridgeService.getExpiringSoonItems(fridgeId, currentUser.id(authentication), days);
         return ResponseEntity.ok(items);
     }
 }

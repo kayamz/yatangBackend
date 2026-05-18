@@ -70,7 +70,7 @@ public class OAuthAccountService {
 
         Fridge mainFridge = new Fridge();
         mainFridge.setName("메인 냉장고");
-        mainFridge.setDescription("소셜 로그인 시 자동으로 생성된 냉장고입니다.");
+        mainFridge.setDescription(null);
         mainFridge.setUser(saved);
         mainFridge.setIsMain(true);
         fridgeRepository.save(mainFridge);

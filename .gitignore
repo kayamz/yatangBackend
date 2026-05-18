@@ -1,5 +1,19 @@
+# Build / IDE (커밋하면 안 됨 — bin·build에 복사된 yml에 비밀이 들어갈 수 있음)
+.gradle/
+build/
+bin/
+out/
+.idea/
+*.iml
+.DS_Store
 
+# 로컬·비밀 설정 (환경변수는 서버/로컬 .env에서만)
+.env
+.env.*
+!.env.example
+**/application-local.yml
+**/application-local.properties
+
+# 프론트(이 저장소 루트에 같이 두는 경우)
 yatangFrontend-react/
 yatangFrontend-RN/
-#*.html
-*.xml

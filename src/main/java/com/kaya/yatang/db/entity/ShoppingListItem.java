@@ -36,4 +36,8 @@ public class ShoppingListItem {
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    /** AI 레시피 등에서 담았을 때 요리 제목 (직접 담기면 null) */
+    @Column(name = "source_recipe_title", length = 200)
+    private String sourceRecipeTitle;
 }

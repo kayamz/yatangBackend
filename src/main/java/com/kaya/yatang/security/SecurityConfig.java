@@ -1,6 +1,7 @@
 package com.kaya.yatang.security;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -23,6 +24,12 @@ public class SecurityConfig {
     private final JwtTokenProvider jwtTokenProvider;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
+    @Value("${yatang.security.allowed-origins:}")
+    private String allowedOrigins;
+
+    @Value("${yatang.security.swagger-enabled:false}")
+    private boolean swaggerEnabled;
+
     // authenticationManager를 Bean 등록
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
@@ -33,7 +40,12 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.addAllowedOriginPattern("*");  // addAllowedOrigin("*") 대신 Pattern 사용
+        for (String origin : allowedOrigins.split(",")) {
+            String trimmed = origin.trim();
+            if (!trimmed.isEmpty()) {
+                configuration.addAllowedOriginPattern(trimmed);
+            }
+        }
         configuration.addAllowedHeader("*");
         configuration.addAllowedMethod("*");
         configuration.setAllowCredentials(true);
@@ -79,13 +91,23 @@ public class SecurityConfig {
                         .requestMatchers(new AntPathRequestMatcher("/login/oauth2/**"))
                         .permitAll()
                         .requestMatchers(
-                                new AntPathRequestMatcher("/swagger-ui/**"),
-                                new AntPathRequestMatcher("/swagger-ui.html"),
-                                new AntPathRequestMatcher("/api-docs/**"),
                                 new AntPathRequestMatcher("/api/login"),
+                                new AntPathRequestMatcher("/api/auth/refresh", "POST"),
+                                new AntPathRequestMatcher("/api/auth/logout", "POST"),
                                 new AntPathRequestMatcher("/api/register"))
                         .permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/api/users/signup", "POST"))
+                        .permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/users/check-*", "GET"))
+                        .permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/recipes/suggest", "POST"))
+                        .permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/recipes/suggest-quota", "GET"))
+                        .permitAll()
+                        .requestMatchers(request -> swaggerEnabled && (
+                                new AntPathRequestMatcher("/swagger-ui/**").matches(request)
+                                        || new AntPathRequestMatcher("/swagger-ui.html").matches(request)
+                                        || new AntPathRequestMatcher("/api-docs/**").matches(request)))
                         .permitAll()
                         .anyRequest()
                         .authenticated())

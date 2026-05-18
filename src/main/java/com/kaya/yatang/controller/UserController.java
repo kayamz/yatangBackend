@@ -6,12 +6,15 @@ import com.kaya.yatang.dto.request.NicknameUpdateRequest;
 import com.kaya.yatang.dto.request.PasswordUpdateRequest;
 import com.kaya.yatang.dto.request.SignupRequest;
 import com.kaya.yatang.dto.response.SignupResponse;
+import com.kaya.yatang.security.CurrentUser;
+import com.kaya.yatang.service.RefreshTokenService;
 import com.kaya.yatang.service.UserService;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,6 +23,8 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final CurrentUser currentUser;
+    private final RefreshTokenService refreshTokenService;
 
     /**
      * 회원가입
@@ -35,10 +40,10 @@ public class UserController {
      */
     @PatchMapping("/{userId}/nickname")
     public ResponseEntity<UserDTO> updateNickname(
-            @PathVariable Long userId,
+            Authentication authentication,
             @RequestBody NicknameUpdateRequest request) {
 
-        UserDTO updatedUser = userService.updateNickname(userId, request);
+        UserDTO updatedUser = userService.updateNickname(currentUser.id(authentication), request);
         return ResponseEntity.ok(updatedUser);
     }
 
@@ -46,8 +51,8 @@ public class UserController {
      * 내 정보 조회 (DTO 반환)
      */
     @GetMapping("/{userId}/profile")
-    public ResponseEntity<UserDTO> getUserProfile(@PathVariable Long userId) {
-        UserDTO userProfile = userService.getUserProfile(userId);
+    public ResponseEntity<UserDTO> getUserProfile(Authentication authentication) {
+        UserDTO userProfile = userService.getUserProfile(currentUser.id(authentication));
         return ResponseEntity.ok(userProfile);
     }
 
@@ -95,10 +100,12 @@ public class UserController {
      */
     @PatchMapping("/{userId}/password")
     public ResponseEntity<Void> updatePassword(
-            @PathVariable Long userId,
+            Authentication authentication,
             @RequestBody PasswordUpdateRequest request) {
 
+        Long userId = currentUser.id(authentication);
         userService.updatePassword(userId, request.getCurrentPassword(), request.getNewPassword());
+        refreshTokenService.revokeAllForUser(userId);
         return ResponseEntity.ok().build();
     }
 
@@ -107,9 +114,9 @@ public class UserController {
      */
     @PostMapping("/{userId}/guest-import")
     public ResponseEntity<Map<String, Object>> importGuestData(
-            @PathVariable Long userId,
+            Authentication authentication,
             @RequestBody GuestImportRequest request) {
-        Map<String, Object> result = userService.importGuestData(userId, request);
+        Map<String, Object> result = userService.importGuestData(currentUser.id(authentication), request);
         return ResponseEntity.ok(result);
     }
 }

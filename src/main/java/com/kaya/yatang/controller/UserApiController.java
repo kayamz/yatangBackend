@@ -2,11 +2,12 @@ package com.kaya.yatang.controller;
 
 import com.kaya.yatang.db.entity.User;
 import com.kaya.yatang.db.repository.UserRepository;
-import com.kaya.yatang.security.JwtTokenProvider;
-import com.kaya.yatang.service.UserService;
+import com.kaya.yatang.service.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,9 +23,8 @@ public class UserApiController {
     @Autowired
     private final PasswordEncoder passwordEncoder;
 
-    private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
-    private final UserService userService;
+    private final RefreshTokenService refreshTokenService;
 
     // 회원가입
 //    @PostMapping("/register")
@@ -40,28 +40,19 @@ public class UserApiController {
 
     // 로그인
     @PostMapping("/login")
-    public String login(@RequestBody Map<String, String> user) {
+    public ResponseEntity<?> login(@RequestBody Map<String, String> user) {
+        try {
+            User userEntity = userRepository
+                    .findByUsername(user.get("username"))
+                    .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 아이디입니다."));
 
-        System.out.println(user);
+            if (!passwordEncoder.matches(user.get("password"), userEntity.getPassword())) {
+                throw new IllegalArgumentException("아이디 또는 비밀번호가 맞지 않습니다.");
+            }
 
-        User userEntity = userRepository.findByUsername(user.get("username"))
-                .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 아이디입니다."));
-
-        System.out.println(user.get("id"));
-
-//        암호화 되지 않은 비밀번호
-//        if (!userEntity.getUserpw().equals(user.get("userpw"))) {
-//            throw new IllegalArgumentException("아이디 또는 비밀번호가 맞지 않습니다.");
-//        }
-
-//        암호화 된 비밀번호
-        if (!passwordEncoder.matches(user.get("password"), userEntity.getPassword())) {
-            throw new IllegalArgumentException("아이디 또는 비밀번호가 맞지 않습니다.");
-        } else {
-            System.out.println(user.get("id"));
-            System.out.println(user.get("password"));
+            return ResponseEntity.ok(refreshTokenService.issueTokens(userEntity));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", ex.getMessage()));
         }
-
-        return jwtTokenProvider.createToken(userEntity.getId(), userEntity.getUsername());
     }
 }

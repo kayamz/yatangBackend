@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS shopping_list_items (
     ingredient_name VARCHAR(200) NOT NULL,
     quantity_note VARCHAR(80),
     unit VARCHAR(40),
+    source_recipe_title VARCHAR(200),
     checked BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );

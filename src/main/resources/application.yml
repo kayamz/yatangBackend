@@ -4,8 +4,7 @@ server:
 
 logging:
   level:
-    # JPA View Parameter
-    org.hibernate.type.descriptor.sql: trace
+    org.hibernate.type.descriptor.sql: ${HIBERNATE_BIND_LOG_LEVEL:warn}
 
 spring:
   config:
@@ -23,14 +22,17 @@ spring:
           google:
             client-id: ${GOOGLE_OAUTH_CLIENT_ID:changeme-google-client-id}
             client-secret: ${GOOGLE_OAUTH_CLIENT_SECRET:changeme-google-secret}
+            # 기본값은 Spring이 현재 요청의 baseUrl로 자동 구성합니다.
+            # 필요 시(프록시 환경 등) GOOGLE_OAUTH2_REDIRECT_URI 로 고정하세요.
+            redirect-uri: ${GOOGLE_OAUTH2_REDIRECT_URI:{baseUrl}/login/oauth2/code/{registrationId}}
             scope:
               - openid
               - profile
               - email
           # 카카오: https://developers.kakao.com/docs/ko/kakaologin/rest-api — redirect_uri는 콘솔 등록값과 완전 일치 (KOE006 방지)
           kakao:
-            client-id: ${KAKAO_REST_API_KEY:f4cbd04a8bcb64e7f6098425cb972dd1}
-            client-secret: ${KAKAO_CLIENT_SECRET:agKTAXB39AlHZDHowuPSNnnBruIMTKT1}
+            client-id: ${KAKAO_REST_API_KEY:changeme-kakao-rest-key}
+            client-secret: ${KAKAO_CLIENT_SECRET:changeme-kakao-secret}
             client-authentication-method: client_secret_post
             authorization-grant-type: authorization_code
             # 카카오 콘솔과 동일한 문자열. 운영은 KAKAO_OAUTH2_REDIRECT_URI 로 실제 도메인 지정.
@@ -48,11 +50,17 @@ spring:
             user-name-attribute: id
 
 # OpenAI (레시피 추천). 환경변수 OPENAI_API_KEY 설정 권장.
-# JWT 만료(ms). 기본 315360000000 ≈ 10년 (3650일)
+# JWT_SECRET은 운영에서 32자 이상의 랜덤 문자열로 반드시 설정하세요.
+# 로컬에서 비워두면 서버 시작마다 임시 랜덤 secret을 생성하므로 재시작 시 기존 토큰은 만료됩니다.
 jwt:
-  expiration-ms: ${JWT_EXPIRATION_MS:315360000000}
+  secret: ${JWT_SECRET:}
+  expiration-ms: ${JWT_EXPIRATION_MS:1800000}
+  refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:2592000000}
 
 yatang:
+  security:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8100,capacitor://localhost,ionic://localhost}
+    swagger-enabled: ${SWAGGER_ENABLED:false}
   oauth2:
     frontend-redirect-url: ${OAUTH_FRONTEND_REDIRECT:http://localhost:3000/oauth/callback}
   ingredient-images:
@@ -61,6 +69,12 @@ yatang:
     api-key: ${OPENAI_API_KEY:}
     model: gpt-4o-mini
     base-url: https://api.openai.com/v1
+    # 동시 AI 추천 호출 상한(인스턴스당). EC2 1대 기준 보호용 — 수평 확장 시 인스턴스마다 별도 한도.
+    max-concurrent-recipe-suggests: ${OPENAI_MAX_CONCURRENT_RECIPE_SUGGESTS:3}
+    recipe-suggest-acquire-timeout-ms: ${OPENAI_RECIPE_SUGGEST_ACQUIRE_TIMEOUT_MS:90000}
+  ai-suggest:
+    daily-limit-guest: ${AI_SUGGEST_DAILY_LIMIT_GUEST:5}
+    daily-limit-user: ${AI_SUGGEST_DAILY_LIMIT_USER:20}
 
 springdoc:
   api-docs:

@@ -45,7 +45,7 @@ public class UserIngredientImageService {
         if (userId == null) {
             return map;
         }
-        Set<String> customNamesLower = catalogRepository.findByUserIdOrderByNameAsc(userId).stream()
+        Set<String> customNamesLower = catalogRepository.findCustomEntriesForUser(userId).stream()
                 .map(e -> e.getName().trim().toLowerCase(Locale.ROOT))
                 .collect(Collectors.toSet());
         for (UserIngredientImage img : imageRepository.findByUserId(userId)) {
@@ -93,7 +93,7 @@ public class UserIngredientImageService {
         }
 
         User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-        if (!catalogRepository.existsByUserIdAndNameIgnoreCase(userId, name)) {
+        if (!catalogRepository.existsCustomEntryForUserByNameIgnoreCase(userId, name)) {
             throw new IllegalArgumentException("직접 추가한 재료에만 사진을 등록할 수 있습니다.");
         }
 

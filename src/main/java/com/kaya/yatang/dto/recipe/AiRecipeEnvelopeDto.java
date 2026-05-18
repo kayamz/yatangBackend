@@ -13,4 +13,7 @@ import lombok.Setter;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AiRecipeEnvelopeDto {
     private List<AiRecipeDto> recipes = new ArrayList<>();
+
+    /** 추천 성공 후 오늘(한국시간) 기준 남은 횟수 등 */
+    private AiSuggestQuotaDto suggestQuota;
 }

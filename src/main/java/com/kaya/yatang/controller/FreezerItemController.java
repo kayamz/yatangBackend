@@ -2,10 +2,12 @@ package com.kaya.yatang.controller;
 
 import com.kaya.yatang.dto.FreezerItemDTO;
 import com.kaya.yatang.dto.request.ItemRequest;
+import com.kaya.yatang.security.CurrentUser;
 import com.kaya.yatang.service.FreezerItemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -18,6 +20,7 @@ import java.util.Map;
 public class FreezerItemController {
 
     private final FreezerItemService freezerItemService;
+    private final CurrentUser currentUser;
 
     /**
      * 냉동실 아이템 추가
@@ -25,10 +28,10 @@ public class FreezerItemController {
     @PostMapping
     public ResponseEntity<FreezerItemDTO> createItem(
         @PathVariable Long fridgeId,
-        @RequestParam Long userId,
+        Authentication authentication,
         @RequestBody ItemRequest request) {
 
-        FreezerItemDTO item = freezerItemService.createItem(fridgeId, userId, request);
+        FreezerItemDTO item = freezerItemService.createItem(fridgeId, currentUser.id(authentication), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(item);
     }
 
@@ -38,9 +41,9 @@ public class FreezerItemController {
     @GetMapping
     public ResponseEntity<List<FreezerItemDTO>> getItems(
         @PathVariable Long fridgeId,
-        @RequestParam Long userId) {
+        Authentication authentication) {
 
-        List<FreezerItemDTO> items = freezerItemService.getItemsByFridge(fridgeId, userId);
+        List<FreezerItemDTO> items = freezerItemService.getItemsByFridge(fridgeId, currentUser.id(authentication));
         return ResponseEntity.ok(items);
     }
 
@@ -51,9 +54,9 @@ public class FreezerItemController {
     public ResponseEntity<FreezerItemDTO> getItem(
         @PathVariable Long fridgeId,
         @PathVariable Long itemId,
-        @RequestParam Long userId) {
+        Authentication authentication) {
 
-        FreezerItemDTO item = freezerItemService.getItemById(itemId, userId);
+        FreezerItemDTO item = freezerItemService.getItemById(itemId, currentUser.id(authentication));
         return ResponseEntity.ok(item);
     }
 
@@ -64,10 +67,10 @@ public class FreezerItemController {
     public ResponseEntity<FreezerItemDTO> updateItem(
         @PathVariable Long fridgeId,
         @PathVariable Long itemId,
-        @RequestParam Long userId,
+        Authentication authentication,
         @RequestBody ItemRequest request) {
 
-        FreezerItemDTO item = freezerItemService.updateItem(itemId, userId, request);
+        FreezerItemDTO item = freezerItemService.updateItem(itemId, currentUser.id(authentication), request);
         return ResponseEntity.ok(item);
     }
 
@@ -78,9 +81,9 @@ public class FreezerItemController {
     public ResponseEntity<Map<String, String>> deleteItem(
         @PathVariable Long fridgeId,
         @PathVariable Long itemId,
-        @RequestParam Long userId) {
+        Authentication authentication) {
 
-        freezerItemService.deleteItem(itemId, userId);
+        freezerItemService.deleteItem(itemId, currentUser.id(authentication));
 
         Map<String, String> response = new HashMap<>();
         response.put("message", "아이템이 삭제되었습니다.");
@@ -93,10 +96,10 @@ public class FreezerItemController {
     @GetMapping("/search")
     public ResponseEntity<List<FreezerItemDTO>> searchItems(
         @PathVariable Long fridgeId,
-        @RequestParam Long userId,
+        Authentication authentication,
         @RequestParam String keyword) {
 
-        List<FreezerItemDTO> items = freezerItemService.searchItems(fridgeId, userId, keyword);
+        List<FreezerItemDTO> items = freezerItemService.searchItems(fridgeId, currentUser.id(authentication), keyword);
         return ResponseEntity.ok(items);
     }
 
@@ -106,9 +109,9 @@ public class FreezerItemController {
     @GetMapping("/long-term")
     public ResponseEntity<List<FreezerItemDTO>> getLongTermFrozenItems(
         @PathVariable Long fridgeId,
-        @RequestParam Long userId) {
+        Authentication authentication) {
 
-        List<FreezerItemDTO> items = freezerItemService.getLongTermFrozenItems(fridgeId, userId);
+        List<FreezerItemDTO> items = freezerItemService.getLongTermFrozenItems(fridgeId, currentUser.id(authentication));
         return ResponseEntity.ok(items);
     }
 
@@ -118,10 +121,10 @@ public class FreezerItemController {
     @GetMapping("/expiring-soon")
     public ResponseEntity<List<FreezerItemDTO>> getExpiringSoonItems(
         @PathVariable Long fridgeId,
-        @RequestParam Long userId,
+        Authentication authentication,
         @RequestParam(defaultValue = "3") int days) {
 
-        List<FreezerItemDTO> items = freezerItemService.getExpiringSoonItems(fridgeId, userId, days);
+        List<FreezerItemDTO> items = freezerItemService.getExpiringSoonItems(fridgeId, currentUser.id(authentication), days);
         return ResponseEntity.ok(items);
     }
 }

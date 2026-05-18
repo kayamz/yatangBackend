@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,9 @@ public class IngredientCatalogService {
     private final UserRepository userRepository;
     private final UserIngredientImageService userIngredientImageService;
 
+    /**
+     * 시스템 공용 카탈로그 + (로그인 시) 해당 사용자만의 직접 추가 재료. 다른 사용자의 직접 추가 항목은 포함하지 않습니다.
+     */
     @Transactional(readOnly = true)
     public List<IngredientCatalogDTO> listCatalog(String q, Long userId, String category) {
         String keyword = q == null ? "" : q.trim();
@@ -43,13 +47,18 @@ public class IngredientCatalogService {
             if (user != null) {
                 List<IngredientCatalogEntry> mine;
                 if (keyword.isEmpty()) {
-                    mine = catalogRepository.findByUserIdOrderByNameAsc(userId);
+                    mine = catalogRepository.findCustomEntriesForUser(userId);
                 } else {
-                    mine = catalogRepository.findByUserIdAndNameContainingIgnoreCaseOrderByNameAsc(userId, keyword);
+                    mine = catalogRepository.findCustomEntriesForUserAndNameContaining(userId, keyword);
                 }
                 merged.addAll(mine);
             }
         }
+
+        // 소유권 방어: 시스템(user null) 또는 요청한 userId의 직접 추가만 노출
+        merged = merged.stream()
+                .filter(e -> e.getUser() == null || (userId != null && Objects.equals(userId, e.getUser().getId())))
+                .collect(Collectors.toList());
 
         if (!cat.isEmpty() && !"전체".equals(cat)) {
             final String filter = cat;
@@ -124,7 +133,7 @@ public class IngredientCatalogService {
         if (catalogRepository.existsByUserIsNullAndNameIgnoreCase(name)) {
             throw new IllegalArgumentException("이미 목록에 있는 재료입니다.");
         }
-        if (catalogRepository.existsByUserIdAndNameIgnoreCase(userId, name)) {
+        if (catalogRepository.existsCustomEntryForUserByNameIgnoreCase(userId, name)) {
             throw new IllegalArgumentException("이미 목록에 있는 재료입니다.");
         }
         IngredientCatalogEntry saved = catalogRepository.save(IngredientCatalogEntry.builder()

@@ -7,12 +7,17 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Date;
 
@@ -20,13 +25,15 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
 
-    private String secretKey = "test";
+    private static final Logger log = LoggerFactory.getLogger(JwtTokenProvider.class);
+
+    @Value("${jwt.secret:}")
+    private String secretKey;
 
     /**
-     * 앱을 삭제하지 않는 한 로그인 유지에 가깝게 동작하도록 긴 만료(기본 약 10년).
-     * 운영에서는 {@code jwt.expiration-ms} 로 조정 가능.
+     * access token은 짧게 유지하고, 장기 로그인은 refresh token으로 처리합니다.
      */
-    @org.springframework.beans.factory.annotation.Value("${jwt.expiration-ms:315360000000}")
+    @Value("${jwt.expiration-ms:1800000}")
     private long tokenValidTime;
 
     private final UserDetailsService userDetailsService;
@@ -39,7 +46,18 @@ public class JwtTokenProvider {
 
     @PostConstruct
     protected void init() {
-        secretKey = Base64.getEncoder().encodeToString(secretKey.getBytes());
+        if (secretKey == null || secretKey.isBlank()) {
+            byte[] randomKey = new byte[32];
+            new SecureRandom().nextBytes(randomKey);
+            secretKey = Base64.getEncoder().encodeToString(randomKey);
+            log.warn("JWT_SECRET이 설정되지 않아 임시 랜덤 JWT secret을 사용합니다. 운영 환경에서는 반드시 JWT_SECRET을 설정하세요.");
+            return;
+        }
+
+        if (secretKey.length() < 32) {
+            throw new IllegalStateException("JWT_SECRET은 32자 이상의 강한 랜덤 문자열로 설정해야 합니다.");
+        }
+        secretKey = Base64.getEncoder().encodeToString(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
     // JWT 토큰 생성
@@ -53,6 +71,10 @@ public class JwtTokenProvider {
                 .setExpiration(new Date(now.getTime() + tokenValidTime)) // set Expire Time
                 .signWith(SignatureAlgorithm.HS256, secretKey) // 사용할 암호화 알고리즘과 signature에 들어갈 secret 값 세팅
                 .compact();
+    }
+
+    public long getTokenValidTime() {
+        return tokenValidTime;
     }
 
     public Authentication getAuthentication(String token) {
