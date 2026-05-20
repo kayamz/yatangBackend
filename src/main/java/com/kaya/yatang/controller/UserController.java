@@ -119,4 +119,13 @@ public class UserController {
         Map<String, Object> result = userService.importGuestData(currentUser.id(authentication), request);
         return ResponseEntity.ok(result);
     }
+
+    /**
+     * 회원 탈퇴 (본인 계정·연관 데이터 삭제)
+     */
+    @DeleteMapping("/{userId}/account")
+    public ResponseEntity<Void> deleteAccount(Authentication authentication) {
+        userService.deleteAccount(currentUser.id(authentication));
+        return ResponseEntity.noContent().build();
+    }
 }

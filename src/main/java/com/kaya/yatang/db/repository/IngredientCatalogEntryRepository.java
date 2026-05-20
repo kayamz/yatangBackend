@@ -45,4 +45,8 @@ public interface IngredientCatalogEntryRepository extends JpaRepository<Ingredie
     @Modifying
     @Query("DELETE FROM IngredientCatalogEntry e WHERE e.id = :id AND e.user IS NOT NULL AND e.user.id = :userId")
     void deleteByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
+
+    @Modifying
+    @Query("DELETE FROM IngredientCatalogEntry e WHERE e.user IS NOT NULL AND e.user.id = :userId")
+    void deleteAllCustomByUserId(@Param("userId") Long userId);
 }

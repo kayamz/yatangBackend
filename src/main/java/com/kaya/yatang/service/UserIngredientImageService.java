@@ -127,6 +127,18 @@ public class UserIngredientImageService {
         return imageRepository.save(entity);
     }
 
+    /** 회원 탈퇴 시 해당 사용자의 업로드 이미지·DB 행 전부 삭제 */
+    @Transactional
+    public void deleteAllForUser(Long userId) {
+        if (userId == null) {
+            return;
+        }
+        for (UserIngredientImage img : imageRepository.findByUserId(userId)) {
+            deleteStoredFileIfExists(img);
+        }
+        imageRepository.deleteAll(imageRepository.findByUserId(userId));
+    }
+
     @Transactional
     public void delete(Long userId, String ingredientName) {
         String name = ingredientName == null ? "" : ingredientName.trim();

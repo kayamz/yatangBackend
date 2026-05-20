@@ -5,10 +5,15 @@ import com.kaya.yatang.db.entity.FreezerItem;
 import com.kaya.yatang.db.entity.Fridge;
 import com.kaya.yatang.db.entity.FridgeItem;
 import com.kaya.yatang.db.entity.PantryItem;
+import com.kaya.yatang.db.repository.AiSuggestDailyUsageRepository;
 import com.kaya.yatang.db.repository.FridgeRepository;
 import com.kaya.yatang.db.repository.FreezerItemRepository;
 import com.kaya.yatang.db.repository.FridgeItemRepository;
+import com.kaya.yatang.db.repository.IngredientCatalogEntryRepository;
 import com.kaya.yatang.db.repository.PantryItemRepository;
+import com.kaya.yatang.db.repository.RefreshTokenRepository;
+import com.kaya.yatang.db.repository.SavedRecipeRepository;
+import com.kaya.yatang.db.repository.ShoppingListItemRepository;
 import com.kaya.yatang.dto.UserDTO;
 import com.kaya.yatang.db.entity.User;
 import com.kaya.yatang.db.repository.UserRepository;
@@ -17,6 +22,7 @@ import com.kaya.yatang.dto.request.NicknameUpdateRequest;
 import com.kaya.yatang.dto.request.ItemRequest;
 import com.kaya.yatang.dto.request.SignupRequest;
 import com.kaya.yatang.dto.response.SignupResponse;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +43,12 @@ public class UserService {
     private final FridgeItemRepository fridgeItemRepository;
     private final FreezerItemRepository freezerItemRepository;
     private final PantryItemRepository pantryItemRepository;
+    private final ShoppingListItemRepository shoppingListItemRepository;
+    private final SavedRecipeRepository savedRecipeRepository;
+    private final IngredientCatalogEntryRepository ingredientCatalogEntryRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final AiSuggestDailyUsageRepository aiSuggestDailyUsageRepository;
+    private final UserIngredientImageService userIngredientImageService;
     private final PasswordEncoder passwordEncoder;
 
     /**
@@ -175,6 +187,24 @@ public class UserService {
     }
 
     /**
+     * 회원 탈퇴 — 계정·냉장고·재료·소셜/일반 로그인 데이터 전부 삭제 (복구 불가)
+     */
+    public void deleteAccount(Long userId) {
+        User user = userRepository.findById(Objects.requireNonNull(userId, "userId"))
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        userIngredientImageService.deleteAllForUser(userId);
+        ingredientCatalogEntryRepository.deleteAllCustomByUserId(userId);
+        shoppingListItemRepository.deleteAll(shoppingListItemRepository.findByUser_IdOrderByCreatedAtDesc(userId));
+        savedRecipeRepository.deleteAll(savedRecipeRepository.findByUser_IdOrderByCreatedAtDesc(userId));
+        pantryItemRepository.deleteAll(pantryItemRepository.findByUser_Id(userId));
+        fridgeRepository.deleteAll(fridgeRepository.findByUserId(userId));
+        refreshTokenRepository.deleteAllByUser_Id(userId);
+        aiSuggestDailyUsageRepository.deleteByActorKey("u:" + userId);
+        userRepository.delete(user);
+    }
+
+    /**
      * 게스트(로컬) 데이터를 로그인 계정으로 병합(import)
      *
      * 정책:
@@ -192,6 +222,7 @@ public class UserService {
         int createdFridgeItems = 0;
         int createdFreezerItems = 0;
         int createdPantryItems = 0;
+        List<Map<String, Object>> importedFridges = new ArrayList<>();
 
         if (request == null || (request.getFridges() == null || request.getFridges().isEmpty())
                 && (request.getPantryItems() == null || request.getPantryItems().isEmpty())) {
@@ -201,6 +232,7 @@ public class UserService {
             res.put("createdFridgeItems", 0);
             res.put("createdFreezerItems", 0);
             res.put("createdPantryItems", 0);
+            res.put("importedFridges", importedFridges);
             return res;
         }
 
@@ -223,6 +255,11 @@ public class UserService {
             Fridge savedFridge = fridgeRepository.save(fridge);
             existingFridges.add(savedFridge);
             createdFridges++;
+
+            Map<String, Object> importedInfo = new HashMap<>();
+            importedInfo.put("id", savedFridge.getId());
+            importedInfo.put("name", savedFridge.getName());
+            importedFridges.add(importedInfo);
 
             if (imported.getFridgeItems() != null) {
                 for (ItemRequest itemReq : imported.getFridgeItems()) {
@@ -286,6 +323,7 @@ public class UserService {
         res.put("createdFridgeItems", createdFridgeItems);
         res.put("createdFreezerItems", createdFreezerItems);
         res.put("createdPantryItems", createdPantryItems);
+        res.put("importedFridges", importedFridges);
         return res;
     }
 
