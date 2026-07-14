@@ -23,6 +23,7 @@ public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    private final OAuthFrontendRedirectResolver oAuthFrontendRedirectResolver;
 
     @Value("${yatang.security.allowed-origins:}")
     private String allowedOrigins;
@@ -74,11 +75,29 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        // OAuth 실패 시 Spring 기본값이 /login 인데, /login도 authenticated면 무한 리다이렉트됨
+        final String signInUrl = "http://jibbabbuja.duckdns.org/signin";
+
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .httpBasic(httpBasic -> httpBasic.disable())
+                .formLogin(form -> form.disable())
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) -> {
+                    String path = request.getRequestURI() == null ? "" : request.getRequestURI();
+                    // /login , /login?error 등으로 오면 SPA 로그인으로 보내서 루프 차단
+                    if (path.equals("/login") || path.startsWith("/login?")) {
+                        response.sendRedirect(signInUrl);
+                        return;
+                    }
+                    String accept = request.getHeader("Accept");
+                    if (accept != null && accept.contains("text/html")) {
+                        response.sendRedirect(signInUrl);
+                    } else {
+                        response.sendError(401, "Unauthorized");
+                    }
+                }))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(new AntPathRequestMatcher("/api/ingredients-catalog", "GET"))
                         .permitAll()
@@ -89,6 +108,10 @@ public class SecurityConfig {
                         .requestMatchers(new AntPathRequestMatcher("/oauth2/**"))
                         .permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/login/oauth2/**"))
+                        .permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/login", "GET"))
+                        .permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/error"))
                         .permitAll()
                         .requestMatchers(
                                 new AntPathRequestMatcher("/api/login"),
@@ -111,7 +134,12 @@ public class SecurityConfig {
                         .permitAll()
                         .anyRequest()
                         .authenticated())
-                .oauth2Login(oauth2 -> oauth2.successHandler(oAuth2LoginSuccessHandler))
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(oAuth2LoginSuccessHandler)
+                        .failureHandler((request, response, exception) -> {
+                            String msg = exception.getMessage() == null ? "oauth_failed" : exception.getMessage();
+                            response.sendRedirect(oAuthFrontendRedirectResolver.errorUrl(request, msg));
+                        }))
                 .addFilterBefore(
                         new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
         return http.build();

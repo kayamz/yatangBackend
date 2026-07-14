@@ -7,10 +7,7 @@ import com.kaya.yatang.service.RefreshTokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -23,9 +20,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
 
     private final OAuthAccountService oAuthAccountService;
     private final RefreshTokenService refreshTokenService;
-
-    @Value("${yatang.oauth2.frontend-redirect-url:http://localhost:3000/oauth/callback}")
-    private String frontendRedirectUrl;
+    private final OAuthFrontendRedirectResolver redirectResolver;
 
     @Override
     public void onAuthenticationSuccess(
@@ -41,10 +36,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         User user = oAuthAccountService.findOrCreateFromOAuth(registrationId, oauth2User);
         AuthTokenResponse tokens = refreshTokenService.issueTokens(user);
 
-        String base = frontendRedirectUrl.split("\\?")[0];
-        String target = base
-                + "?accessToken=" + URLEncoder.encode(tokens.getAccessToken(), StandardCharsets.UTF_8)
-                + "&refreshToken=" + URLEncoder.encode(tokens.getRefreshToken(), StandardCharsets.UTF_8);
+        String target = redirectResolver.successUrl(request, tokens.getAccessToken(), tokens.getRefreshToken());
         getRedirectStrategy().sendRedirect(request, response, target);
     }
 }

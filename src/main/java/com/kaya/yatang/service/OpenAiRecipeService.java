@@ -198,7 +198,7 @@ public class OpenAiRecipeService {
                       "substitute": "대체 가능 시 짧은 한글(예: 치킨스톡, 액젓). 대체가 없거나 불필요하면 빈 문자열"
                     }
                   ],
-                  "steps": [ "1단계 설명", "2단계 설명" ],
+                  "steps": [ "번호 없이 단계 설명만", "다음 단계 설명만" ],
                   "missingIngredients": [
                     {
                       "name": "부족한 재료",
@@ -233,7 +233,7 @@ public class OpenAiRecipeService {
             - ingredients·missingIngredients 항목마다 substitute 필드를 포함할 것.
               재료마다 흔히 쓰는 대체재가 있으면 짧게 적고, 없으면 "".
               사용자가 넘긴 보유 재료와 맥락을 고려해 실용적으로 제안.
-            - steps는 번호 순서대로 명확하게 작성(레시피당 통상 5~10단계 정도가 되도록, 너무 과장되지 않게)
+            - steps 배열 각 문자열에는 "1.", "2)", "1단계" 같은 번호를 넣지 말 것(UI가 순서를 붙임). 설명 문장만 작성(레시피당 통상 5~10단계)
             - amount는 g, ml, 큰술, 작은술, 컵, 개 등의 단위를 사용
             """
         );
