@@ -2,7 +2,7 @@ server:
   port: 8080
   forward-headers-strategy: framework
   # OAuth 로그인 시 브라우저(앱 WebView)가 세션(state) 쿠키를 유지해야 함.
-  # HTTP(DuckDNS) 단계에서는 secure=false. HTTPS 적용 후 true 권장.
+  # HTTPS(DuckDNS) 적용 후 SESSION_COOKIE_SECURE=true 권장.
   servlet:
     session:
       cookie:
@@ -73,6 +73,8 @@ yatang:
     frontend-redirect-url: ${OAUTH_FRONTEND_REDIRECT:http://localhost:3000/oauth/callback}
     # 앱(Custom Tab) OAuth 완료 후 딥링크. Android/iOS URL 스킴과 동일해야 함.
     app-redirect-url: ${OAUTH_APP_REDIRECT:com.kaya.yatang://oauth/callback}
+    # OAuth 실패·미인증 HTML 진입 시 SPA 로그인 URL (운영은 HTTPS)
+    signin-url: ${OAUTH_SIGNIN_URL:https://jibbabbuja.duckdns.org/signin}
   ingredient-images:
     storage-dir: ${INGREDIENT_IMAGE_DIR:uploads/user-ingredient-images}
   openai:
