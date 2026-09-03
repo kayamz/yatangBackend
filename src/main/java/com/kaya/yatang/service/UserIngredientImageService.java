@@ -32,7 +32,7 @@ public class UserIngredientImageService {
 
     private static final Set<String> ALLOWED_TYPES =
             Set.of("image/jpeg", "image/png", "image/webp", "image/gif");
-    private static final long MAX_BYTES = 2 * 1024 * 1024;
+    private static final long MAX_BYTES = 10 * 1024 * 1024;
 
     private final UserIngredientImageRepository imageRepository;
     private final UserRepository userRepository;
@@ -85,7 +85,7 @@ public class UserIngredientImageService {
             throw new IllegalArgumentException("재료 이름을 입력해주세요.");
         }
         if (file.getSize() > MAX_BYTES) {
-            throw new IllegalArgumentException("이미지는 2MB 이하만 업로드할 수 있습니다.");
+            throw new IllegalArgumentException("이미지는 10MB 이하만 업로드할 수 있습니다.");
         }
         String ct = file.getContentType();
         if (ct == null || !ALLOWED_TYPES.contains(ct.toLowerCase(Locale.ROOT))) {
