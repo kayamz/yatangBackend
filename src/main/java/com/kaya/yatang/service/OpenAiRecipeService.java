@@ -249,6 +249,8 @@ public class OpenAiRecipeService {
             - steps에서 양념을 넣는 순서를 분명히 하고, 짠맛/매운맛/단맛 중 그 요리에 해당하는 간만 보기 멘트를 할 것.
             - steps에 쓰인 조미·양념은 ingredients 또는 missingIngredients와 반드시 일치(단계에서만 등장하는 재료 누락 금지).
 
+            - ingredients·missingIngredients 항목은 반드시 {name, amount, note, substitute} 객체여야 함.
+              절대 "파슬리"처럼 문자열만 넣지 말 것.
             - ingredients·missingIngredients 항목마다 substitute 필드를 포함할 것.
               재료마다 흔히 쓰는 대체재가 있으면 짧게 적고, 없으면 "".
               예: 매실청↔설탕+물(단맛이 필요한 요리에서만), 물엿↔설탕, 맛술↔청주(+필요 시 소량 설탕), 참기름↔식용유(향은 약해짐).

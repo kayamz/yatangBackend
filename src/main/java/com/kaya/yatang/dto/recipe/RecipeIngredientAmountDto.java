@@ -1,6 +1,7 @@
 package com.kaya.yatang.dto.recipe;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonDeserialize(using = RecipeIngredientAmountDtoDeserializer.class)
 public class RecipeIngredientAmountDto {
     private String name;
     /** 예: "200g", "1/2큰술", "3개" */

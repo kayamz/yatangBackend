@@ -33,7 +33,7 @@ dependencies {
 	// javax.xml.bind
 	implementation 'javax.xml.bind:jaxb-api:2.4.0-b180830.0359'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.projectlombok:lombok:1.18.26'
+	implementation 'org.projectlombok:lombok:1.18.34'
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
@@ -42,7 +42,7 @@ dependencies {
 
 	implementation 'org.springframework.boot:spring-boot-starter-tomcat'
 
-	annotationProcessor 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok:1.18.34'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
